@@ -1,0 +1,138 @@
+/* ========== Typography ========== */
+.login-name {
+  text-align: center;
+  color: #262627;
+  font-size: 42px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.extra-name {
+  text-align: center;
+  color: #646969;
+  margin-bottom: 25px;
+  font-size: 15px;
+  font-family: 'Arial', sans-serif;
+}
+
+/* ========== Container Styling ========== */
+.container {
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
+  padding: 50px;
+  border-radius: 20px;
+  width: 400px;
+  box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.1);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========== Form Styling ========== */
+.container form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  font-family: 'Arial', sans-serif;
+}
+
+/* ========== Input Field Styling ========== */
+.input-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d1d1d1;
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: white;
+  transition: box-shadow 0.3s ease;
+}
+/* 
+.input-container:focus-within {
+  box-shadow: 0 0 5px rgba(104, 58, 183, 0.3);
+} */
+
+.input-container:focus-within {
+  border-color: #6c63ff;
+}
+
+
+
+
+
+.input-container .icon {
+  font-size: 20px;
+  color: #6c63ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-container input {
+  margin-left: 10px;
+  width: 100%;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  font-family: 'Arial', sans-serif;
+  background: transparent;
+}
+
+.input-container input::placeholder {
+  font-size: 13px;
+  color: #a0a0a0;
+}
+
+/* ========== Button Styling ========== */
+.login-button button {
+  background: linear-gradient(135deg, #6c63ff, #9575cd);
+  border: none;
+  font-size: 18px;
+  font-weight: 500;
+  color: white;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  width: 100%; //that logout button problem why that is widthh because of this 
+  transition: all 0.3s ease;
+}
+
+.login-button button:hover {
+  background: linear-gradient(135deg, #5c54e6, #8561c5);
+  box-shadow: 0px 5px 15px rgba(65, 61, 143, 0.3);
+}
+
+.login-button button:active {
+  transform: scale(0.97);
+}
+
+/* ========== Text Below Button ========== */
+span {
+  font-size: 13px;
+  text-align: center;
+  color: #777;
+  margin-top: 5px;
+}
+
+span .space {
+  margin: 0 5px;
+}
+
+/* Existing class */
+.space {
+  margin-left: 5px;  /* your spacing */
+  color: blue;       /* make link blue */
+  text-decoration: underline; /* optional: underline for links */
+  cursor: pointer;   /* pointer on hover */
+}
+
+.space:hover {
+  color: darkblue;   /* optional: darker on hover */
+}

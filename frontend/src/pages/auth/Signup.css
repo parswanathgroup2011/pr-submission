@@ -1,0 +1,157 @@
+/* Signup.css */
+
+/* Styling for the container */
+
+body{
+  background-color: #f5f3ff;
+
+}
+
+
+
+
+.signup-container {
+  width: 100%;
+  max-width: 1000px;
+  height:20%;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: rgba(254, 255, 255, 0.3); 
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgb(65, 0, 117);
+  justify-content:center;
+  align-items:center;
+  margin-bottom: 20px;
+
+  margin-top:50px;
+ 
+  
+}
+
+
+
+.signup-container h2 {
+  text-align: center;
+  color: rgb(11, 11, 49);
+  display:flex;
+  justify-content:center;
+  font-size:45px;
+  font-family: 'Poppins', sans-serif;
+ 
+}
+
+/* Flexbox styling for the form */
+.signup-form {
+  display: grid;
+  flex-wrap: wrap; /* Allows wrapping for responsive design */
+  gap: 20px; /* Adds space between form fields */
+}
+
+/* Styling for each form group */
+.form-group {
+  margin-top:5px;
+  flex: 1 1 calc(33.33% - 20px); /* This ensures three fields per row */
+  min-width: 220px; /* To ensure each field has a minimum width */
+  display: grid;
+  flex-direction: column;
+  outline:none;
+  font-size:13px;
+
+}
+
+/* Make sure the input fields fill up the width */
+.form-group input,
+.form-group select
+ {
+  padding: 6px;
+  margin: 5px 0;
+  border-radius: 5px;
+  
+  outline:none;
+  border:none;
+  width:180px;
+  height:30px;
+  margin-top:8px;
+
+}
+
+input:focus,select:focus{
+  transform: scale(1.00);
+  box-shadow: 0 0 8px rgba(13, 78, 148, 0.5); 
+  background-color:rgb(247, 255, 252)
+  
+  
+}
+
+.signup-container fieldset{
+  border-color:rgb(196, 39, 39);
+  outline:none;
+  margin-top:20px;
+  border:1px solid rgb(233, 227, 227);
+  
+
+}
+
+
+
+.namefield {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 3 columns */
+  gap: 15px; /* Space between fields */
+  font-family: "Arial";
+}
+
+.signup-button button{
+
+ background-color: purple;
+  border: none;
+  width:250px;
+  height:45px;
+
+  font-size: 20px;
+  color: white;
+  border-radius: 5px;
+  padding:10px;
+  cursor: pointer;
+  margin: 10px;
+}
+
+button:hover {
+  background-color:rgb(145, 2, 102);
+}
+
+button:active {
+  transform: scale(1.05); /* Slight shrink on click */
+}
+
+.signup-button .login-link{
+  font-size:20px;
+  margin-top:10px;
+}
+
+/* Make it responsive for smaller screens */
+@media (max-width: 700px) {
+  .form-group {
+    flex: 1 1 100%; /* Stack fields vertically on small screens */
+  }
+
+  .signup-form {
+    gap: 15px; /* Reduced space between fields on smaller screens */
+  }
+}
+
+/* Styling for the link at the bottom */
+.signup-form span {
+  display: block;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.signup-form span a {
+  text-decoration: none;
+  color: #007bff;
+}
+
+.signup-form span a:hover {
+  text-decoration: underline;
+}
