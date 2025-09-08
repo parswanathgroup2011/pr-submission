@@ -7,6 +7,7 @@ import './Login.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faLock,faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
+import { loginUser } from '../services/auth';
 
 
 
@@ -37,10 +38,8 @@ const handleLogin = async (e) => {
   }
 
   try {
-    const url = "http://localhost:5002/api/auth/login";
-    const response = await axios.post(url, loginInfo); // Axios call
+   const { success, message, token, name, role, error } = await loginUser(loginInfo);
 
-    const { success, message, token, name,role,error } = response.data;
     if (success) {
       handleSuccess(message);
       localStorage.setItem("authToken", token);

@@ -5,6 +5,8 @@ import "react-toastify/dist/ReactToastify.css";
 import { handleError, handleSuccess } from "../../utils";
 import './Signup.css';
 import axios from 'axios'; 
+import { signupUser } from "../services/auth";
+
 
 function Signup() {
   const [signupInfo,setSignupInfo] = useState({
@@ -64,7 +66,6 @@ function Signup() {
     }) )
 };
 
-  // Make sure axios is imported
 
 const handleSignup = async (e) => {
   e.preventDefault();
@@ -73,32 +74,20 @@ const handleSignup = async (e) => {
   const { clientName, email, password, confirmPassword } = signupInfo;
 
   if (!clientName || !email || !password || !confirmPassword) {
-    return handleError('Name, email and password are required');
+    return handleError("Name, email and password are required");
   }
 
   if (password !== confirmPassword) {
     return handleError("Passwords do not match");
   }
 
-  const url = "http://localhost:5002/api/auth/signup";
-
   try {
-    const formData = new FormData();
-    Object.keys(signupInfo).forEach((key) => {
-      const value = signupInfo[key];
-      if (value !== null && value !== undefined) {
-        formData.append(key, value);
-      }
-    });
-
-    const response = await axios.post(url, formData);
-
-    const { success, message, error } = response.data;
+    const { success, message, error } = await signupUser(signupInfo);
 
     if (success) {
       handleSuccess(message);
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 1000);
     } else if (error) {
       const details = error?.details?.[0]?.message;
@@ -106,9 +95,6 @@ const handleSignup = async (e) => {
     } else {
       handleError(message);
     }
-
-    console.log(response.data);
-
   } catch (err) {
     handleError("Something went wrong");
     console.log(err);
