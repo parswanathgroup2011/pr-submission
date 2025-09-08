@@ -7,7 +7,7 @@ import './Login.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faLock,faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
-import { loginUser } from '../services/auth';
+import { loginUser } from '../../services/auth';
 
 
 

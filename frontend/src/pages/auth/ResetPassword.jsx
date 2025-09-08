@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import './ResetPassword.css';
-import { resetPassword } from "../services/api/auth";
+import { resetPassword } from "../../services/auth";
 
 
 const ResetPassword = () => {

@@ -5,7 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { handleError, handleSuccess } from "../../utils";
 import './Signup.css';
 import axios from 'axios'; 
-import { signupUser } from "../services/auth";
+import { signupUser } from "../../services/auth";
 
 
 function Signup() {
