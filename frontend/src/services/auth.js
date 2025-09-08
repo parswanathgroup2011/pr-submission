@@ -1,4 +1,4 @@
-import apiClient from '../../apiClient';
+import apiClient from '../services/apiClient';
 
 // Login API
 export const loginUser = async (loginInfo) => {
