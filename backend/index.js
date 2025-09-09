@@ -27,7 +27,7 @@ const upload = require('./Middleware/MulterConfig');
 const PORT = process.env.PORT || 5002;
 
 // Test route
-app.get('/yash', (req, res) => {
+app.get('/api/yash', (req, res) => {
   res.send('vyas');
 });
 
