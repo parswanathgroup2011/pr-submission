@@ -60,10 +60,20 @@ export const getPressReleaseById = async (prId) => {
     throw error;
   }
 };
-
 export const updatePressRelease = async (prId, prUpdateData) => {
   try {
-    const response = await apiClient.put(`${API_ENDPOINT}/${prId}`, prUpdateData);
+    const formData = new FormData();
+
+    Object.keys(prUpdateData).forEach((key) => {
+      if (prUpdateData[key] !== null && prUpdateData[key] !== undefined) {
+        formData.append(key, prUpdateData[key]);
+      }
+    });
+
+    const response = await apiClient.put(`${API_ENDPOINT}/${prId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
     return response.data;
   } catch (error) {
     console.error(
