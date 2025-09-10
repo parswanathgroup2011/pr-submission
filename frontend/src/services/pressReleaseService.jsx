@@ -60,17 +60,11 @@ export const getPressReleaseById = async (prId) => {
     throw error;
   }
 };
+
+
 export const updatePressRelease = async (prId, prUpdateData) => {
   try {
-    const formData = new FormData();
-
-    Object.keys(prUpdateData).forEach((key) => {
-      if (prUpdateData[key] !== null && prUpdateData[key] !== undefined) {
-        formData.append(key, prUpdateData[key]);
-      }
-    });
-
-    const response = await apiClient.put(`${API_ENDPOINT}/${prId}`, formData, {
+    const response = await apiClient.put(`${API_ENDPOINT}/${prId}`, prUpdateData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
 
@@ -83,7 +77,7 @@ export const updatePressRelease = async (prId, prUpdateData) => {
     throw error;
   }
 };
-
+ 
 export const deletePressRelease = async (prId) => {
   try {
     const response = await apiClient.delete(`${API_ENDPOINT}/${prId}`);

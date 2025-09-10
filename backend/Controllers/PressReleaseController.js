@@ -128,6 +128,9 @@ const getPressReleaseByPrId = async (req, res) => {
 // 🟡 Update Press Release
 const updatePressRelease = async (req, res) => {
   try {
+
+    console.log("📝 Body fields:", req.body);
+    console.log("📸 File:", req.file); 
     const {
       title,
       summary,
