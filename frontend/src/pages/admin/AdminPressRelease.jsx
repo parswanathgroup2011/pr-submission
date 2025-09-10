@@ -51,6 +51,12 @@ const AdminPressReleaseTable = () => {
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
+  const getImageUrl = (filePath) => {
+  if (!filePath) return "";
+  const cleanedPath = filePath.replace(/^uploads\//, ""); // remove leading "uploads/" if present
+  const baseUrl = import.meta.env.VITE_API_URL.replace("/api", "");
+  return `${baseUrl}/uploads/${cleanedPath}`;
+};
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
@@ -149,10 +155,11 @@ const AdminPressReleaseTable = () => {
                         {pr.image ? (
                           <Avatar
                             variant="rounded"
-                            src={`http://localhost:5002/${pr.image}`}
+                            src={getImageUrl(pr.image)}
                             alt="PR"
                             sx={{ width: 60, height: 40 }}
                           />
+
                         ) : (
                           "No Image"
                         )}
