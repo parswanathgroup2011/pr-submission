@@ -73,7 +73,7 @@ router.get("/:id", async (req, res) => {
       doc.fontSize(14).text("Category Details:", { underline: true });
       doc.fontSize(12).text(`Name: ${pr.selectedCategory.name}`);
       doc.text(`Active: ${pr.selectedCategory.isActive ? "Yes" : "No"}`);
-      doc.text(`Order: ${pr.selectedCategory.order || "-"}`);
+     
       doc.moveDown();
     }
 
