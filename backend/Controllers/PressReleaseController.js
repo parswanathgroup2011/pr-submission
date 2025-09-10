@@ -132,7 +132,6 @@ const updatePressRelease = async (req, res) => {
       title,
       summary,
       content,
-      image,
       quoteDescription,
       city,
       subMember,
@@ -146,10 +145,11 @@ const updatePressRelease = async (req, res) => {
     const pressRelease = await PressRelease.findById(req.params.id);
     if (!pressRelease) return res.status(404).json({ error: "Press release not found" });
 
-    if(['published','rejected'].includes(pressRelease.status)){
-      return res.status(403).json({error:"You can only edit press release in Draft or Pending Status"})
+    if (['published', 'rejected'].includes(pressRelease.status)) {
+      return res.status(403).json({ error: "You can only edit press release in Draft or Pending Status" });
     }
 
+    // Validate plan and category
     if (selectedPlan) {
       const plan = await Plan.findById(selectedPlan);
       if (!plan) return res.status(404).json({ error: "Selected Plan doesn't exist" });
@@ -160,10 +160,16 @@ const updatePressRelease = async (req, res) => {
       if (!category) return res.status(404).json({ error: "Selected Category doesn't exist" });
     }
 
+    // ✅ Update fields
     pressRelease.title = title || pressRelease.title;
     pressRelease.summary = summary || pressRelease.summary;
     pressRelease.content = content || pressRelease.content;
-    pressRelease.image = image || pressRelease.image;
+
+    // ✅ Handle new image from Multer
+    if (req.file) {
+      pressRelease.image = req.file.path;   // e.g. "uploads/filename.png"
+    }
+
     pressRelease.quoteDescription = quoteDescription || pressRelease.quoteDescription;
     pressRelease.city = city || pressRelease.city;
     pressRelease.subMember = subMember || pressRelease.subMember;
@@ -176,10 +182,16 @@ const updatePressRelease = async (req, res) => {
     await pressRelease.save();
     res.status(200).json({ message: "Press Release Updated Successfully", pressRelease });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error in updatePressRelease:", error);
     res.status(500).json({ error: "Server error" });
   }
-};// 🔴 Delete PR
+};
+
+
+
+
+
+// 🔴 Delete PR
 const deletePressRelease = async (req, res) => {
   try {
     const pressRelease = await PressRelease.findById(req.params.id);
