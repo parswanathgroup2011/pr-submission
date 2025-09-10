@@ -76,9 +76,9 @@ const AdminPressReleaseTable = () => {
             <TableHead>
   <TableRow>
     {[
-      "PR ID", "Title", "Summary", "Content", "Image", "Quote",
+      "PR ID","Download", "Title", "Summary", "Content", "Image", "Quote",
       "City", "Tags", "Scheduled At", "Status", "Plan",
-      "Category", "Created", "Updated", "Download"
+      "Category", "Created", "Updated",
     ].map((header) => (
       <TableCell
         key={header}

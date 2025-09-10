@@ -45,6 +45,12 @@ const UserMaster = () => {
       user.email?.toLowerCase().includes(search.toLowerCase()) ||
       user.mobileNumber?.toLowerCase().includes(search.toLowerCase())
   );
+  const getImageUrl = (filePath) => {
+  if (!filePath) return "";
+  const baseUrl = import.meta.env.VITE_API_URL.replace("/api", ""); 
+  return `${baseUrl}/${filePath}`;
+};
+
 
   // Pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -174,40 +180,44 @@ const UserMaster = () => {
 
                 <TableCell>
                   {user.profileImage && (
-                    <img
-                      src={`http://localhost:5002/${user.profileImage}`}  // change to your backend domain
-                      alt="Profile"
-                      style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "8px" }}
-                    />
+                   <img
+  src={getImageUrl(user.profileImage)}
+  alt="Profile"
+  style={{ width: 50, height: 50, objectFit: "cover", borderRadius: "8px" }}
+/>
+
                   )}
                 </TableCell>
                   <TableCell>
                   {user.businessLogo && (
-                    <img
-                      src={`http://localhost:5002/${user.businessLogo}`}
-                      alt="Logo"
-                      style={{ width: 50, height: 50, objectFit: "contain", borderRadius: "8px" }}
-                    />
+                   <img
+  src={getImageUrl(user.businessLogo)}
+  alt="Logo"
+  style={{ width: 50, height: 50, objectFit: "contain", borderRadius: "8px" }}
+/>
+
                   )}
                 </TableCell>
                 <TableCell>{user.gstNumber}</TableCell>
                 <TableCell>
                   {user.gstImage && (
                     <img
-                      src={`http://localhost:5002/${user.gstImage}`}
-                      alt="GST"
-                      style={{ width: 50, height: 50, objectFit: "contain" }}
-                    />
+  src={getImageUrl(user.gstImage)}
+  alt="GST"
+  style={{ width: 50, height: 50, objectFit: "contain" }}
+/>
+
                   )}
                 </TableCell>
                 <TableCell>{user.panNumber}</TableCell>
                 <TableCell>
                   {user.panImage && (
                     <img
-                      src={`http://localhost:5002/${user.panImage}`}
-                      alt="PAN"
-                      style={{ width: 50, height: 50, objectFit: "contain" }}
-                    />
+  src={getImageUrl(user.panImage)}
+  alt="PAN"
+  style={{ width: 50, height: 50, objectFit: "contain" }}
+/>
+
                   )}
                 </TableCell>
                 <TableCell>{user.ifscCode}</TableCell>
