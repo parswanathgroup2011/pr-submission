@@ -23,19 +23,27 @@ const AdminTransactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        const data = await getAllTransactions();
-        setTransactions(data?.transactions || []);
-      } catch (err) {
-        console.error("Failed to fetch transactions:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTransactions();
-  }, []);
+  
+useEffect(() => {
+  const fetchTransactions = async () => {
+    try {
+      const data = await getAllTransactions();
+
+      // 🆕 Sort by latest first
+      const sorted = (data?.transactions || []).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setTransactions(sorted);
+    } catch (err) {
+      console.error("Failed to fetch transactions:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchTransactions();
+}, []);
+
 
   // 🔎 Search filter
   const filteredTransactions = transactions.filter(
