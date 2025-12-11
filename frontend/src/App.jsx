@@ -21,6 +21,10 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminPressReleaseTable from "./pages/admin/AdminPressRelease";
 import UserWallet from "./pages/admin/UserWallet";
+import AdminManualTopups from "./pages/admin/AdminManualTopups";
+import UserNotifications from "./pages/client/UserNotifications";
+import AdminNotifications from "./pages/admin/AdminNotifications";
+
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true); // Set true for testing
@@ -81,6 +85,8 @@ function App() {
           <Route path="press-release" element={<PostPressRelease />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="notifications" element={<UserNotifications />} />
+
         </Route>
 
         {/* Admin Protected Routes */}
@@ -89,7 +95,10 @@ function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="transactions" element={<AdminTransactions />} />
           <Route path="press-releases" element={<AdminPressReleaseTable />} />
+          <Route path="manual-topups" element={<AdminManualTopups />} />
           <Route path="wallets" element={<UserWallet />} />
+          <Route path="notifications" element={<AdminNotifications />} />
+
         </Route>
       </Routes>
     </div>

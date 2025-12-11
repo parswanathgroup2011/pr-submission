@@ -33,6 +33,7 @@
     "react-hook-form": "^7.59.0",
     "react-router-dom": "^7.4.0",
     "react-toastify": "^11.0.5",
+    "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.10",
     "toastify": "^2.0.1",
     "yup": "^1.6.1"

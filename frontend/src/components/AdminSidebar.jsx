@@ -8,6 +8,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet"; // ✅ Wallet icon
 import { useNavigate } from "react-router-dom";
 import { handleSuccess } from "../utils";
+import UploadIcon from "@mui/icons-material/Upload"; 
 
 const drawerWidth = 220;
 
@@ -15,14 +16,16 @@ const AdminSidebar = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  const menuItems = [
+const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: "/admin" },
     { text: 'Press Releases', icon: <DescriptionIcon />, path: '/admin/press-releases' },
     { text: 'Users', icon: <PeopleIcon />, path: "/admin/users" },
     { text: 'Transactions', icon: <ReceiptIcon />, path: "/admin/transactions" },
-    { text: 'Wallets', icon: <AccountBalanceWalletIcon />, path: "/admin/wallets" }, // ✅ Wallet page link
+    { text: 'Wallets', icon: <AccountBalanceWalletIcon />, path: "/admin/wallets" },
+    { text: 'Payment Approval Requests', icon: <UploadIcon />, path: "/admin/manual-topups" },  // ✅ NEW PAGE
     { text: 'Logout', icon: <LogoutIcon />, path: '/login', action: 'logout' },
-  ];
+];
+
 
   return (
     <Drawer

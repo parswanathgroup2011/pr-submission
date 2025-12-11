@@ -1,72 +1,89 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { Outlet, useNavigate } from "react-router-dom";
 import {
   AppBar,
   Box,
   Toolbar,
-  Typography,
   IconButton,
   Tooltip
 } from "@mui/material";
+
 import logo from '../assets/logo.webp';
 import LogoutIcon from '@mui/icons-material/Logout';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import { handleSuccess } from "../utils"; // Ensure this is imported
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+
+import { handleSuccess } from "../utils";
+import { toast } from "react-toastify";
+import { connectSocket, socket } from "../socket"; // ✅ IMPORTANT
 
 const Layout = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('loggedInUser');
-    handleSuccess('User Logged out');
-    setTimeout(() => {
-      navigate('/login');
-    }, 1000);
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("loggedInUser");
+    handleSuccess("User logged out");
+    navigate("/login");
   };
-  const handleProfile =() => {
-    setTimeout(() => {
-      navigate('/profile')
-    },500);
-  }
+
+  const handleProfile = () => {
+    navigate("/profile");
+  };
+
+  // 🔥 CONNECT SOCKET WHEN LAYOUT LOADS
+  useEffect(() => {
+    connectSocket();   // <--- YOU MISSED THIS
+  }, []);
+
+  // 🔥 LISTEN FOR REAL-TIME NOTIFICATIONS
+  useEffect(() => {
+    const listener = (data) => {
+      console.log("🔔 User Notification:", data);
+      toast.info(`${data.title}: ${data.message}`, { position: "top-right" });
+    };
+
+    socket?.on("newNotification", listener);
+
+    return () => {
+      socket?.off("newNotification", listener);
+    };
+  }, []);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      {/* Top AppBar */}
-      <AppBar position="static" sx={{ backgroundColor: "rgb(27,81,189)", marginTop: -1 }}>
+      
+      {/* TOP NAVBAR */}
+      <AppBar position="static" sx={{ backgroundColor: "rgb(27,81,189)" }}>
         <Toolbar>
-          {/* Logo on the left */}
-          <img src={logo} alt="logo" style={{ height: 40, marginLeft: 30, padding: 10 }} />
 
-          {/* Spacer pushes the logout icon to the right */}
+          <img src={logo} alt="logo" style={{ height: 40, marginLeft: 30 }} />
+
           <Box sx={{ flexGrow: 1 }} />
 
-          {/* Logout Button on the right */}
           <Tooltip title="My Profile">
-          <IconButton color="inherit" sx={{width:35,height:35,borderRadius:10}} onClick={handleProfile}>
-            <AccountBoxIcon />
+            <IconButton color="inherit" onClick={handleProfile}>
+              <AccountBoxIcon />
             </IconButton>
           </Tooltip>
+
           <Tooltip title="Logout">
-            <IconButton color="inherit" sx={{width:35, height:35,borderRadius:10,ml:2}} onClick={handleLogout}>
+            <IconButton color="inherit" sx={{ ml: 2 }} onClick={handleLogout}>
               <LogoutIcon />
             </IconButton>
           </Tooltip>
+
         </Toolbar>
       </AppBar>
 
-      {/* Main layout below AppBar */}
+      {/* MAIN CONTENT */}
       <Box sx={{ display: "flex", flex: 1 }}>
-        {/* Sidebar */}
         <Sidebar />
-
-        {/* Main content */}
-        <Box component="main" sx={{ flexGrow: 1, backgroundColor: "#fff", marginLeft: -1 }}>
+        <Box component="main" sx={{ flexGrow: 1, backgroundColor: "#fff" }}>
           <Outlet />
         </Box>
       </Box>
+
     </Box>
   );
 };
