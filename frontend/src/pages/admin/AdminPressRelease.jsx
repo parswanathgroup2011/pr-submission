@@ -65,11 +65,10 @@ const AdminPressReleaseTable = () => {
 };
 
 const handleReject = async (id) => {
-  const reason = prompt("Enter rejection reason");
-  if (!reason) return;
+  if (!window.confirm("Are you sure you want to reject this press release?")) return;
 
   try {
-    await rejectPressRelease(id, { reason });
+    await rejectPressRelease(id); // 👈 no reason sent
 
     setPrs(prev =>
       prev.map(pr =>
@@ -80,6 +79,7 @@ const handleReject = async (id) => {
     alert(error.response?.data?.error || "Rejection failed");
   }
 };
+
 
 
   // Pagination handlers

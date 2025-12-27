@@ -28,7 +28,7 @@ export const getPRStats = async () => {
       pendingPR:   data.pendingPR   ?? data.pending   ?? 0,
       publishedPR: data.publishedPR ?? data.approved  ?? 0,
       // Dashboard prop is `rejectPR`, but BE sends `rejectedPR`
-      rejectPR:    data.rejectedPR  ?? data.rejected  ?? 0,
+      rejectedPR:    data.rejectedPR  ?? data.rejected  ?? 0,
     };
 };
 
