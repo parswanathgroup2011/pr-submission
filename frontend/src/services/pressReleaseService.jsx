@@ -124,6 +124,40 @@ export const downloadPressReleasePDF = async (prId) => {
   }
 };
 
+// ✅ ADMIN: Approve PR (wallet deducted in backend)
+export const approvePressRelease = async (prId) => {
+  try {
+    const { data } = await apiClient.put(
+      `${API_ENDPOINT}/approve/${prId}`
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `❌ Error approving PR (${prId}):`,
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
+// ❌ ADMIN: Reject PR (no wallet deduction)
+export const rejectPressRelease = async (prId, payload = {}) => {
+  try {
+    const { data } = await apiClient.put(
+      `${API_ENDPOINT}/reject/${prId}`,
+      payload // { reason }
+    );
+    return data;
+  } catch (error) {
+    console.error(
+      `❌ Error rejecting PR (${prId}):`,
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
 
 
-export default {createPressRelease,getPRHistory,getPRStats,getPressReleaseById,updatePressRelease,deletePressRelease,getAllPressReleases,downloadPressReleasePDF}
+
+
+export default {createPressRelease,getPRHistory,getPRStats,getPressReleaseById,updatePressRelease,deletePressRelease,getAllPressReleases,downloadPressReleasePDF,approvePressRelease,rejectPressRelease}

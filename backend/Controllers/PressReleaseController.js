@@ -284,46 +284,91 @@ const approvePressRelease = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const pressRelease = await PressRelease.findById(id).populate('selectedPlan');
+    const pressRelease = await PressRelease
+      .findById(id)
+      .populate('selectedPlan');
+
     if (!pressRelease) {
       return res.status(404).json({ error: "PR not found" });
     }
 
+    // 🔐 Prevent double processing
     if (pressRelease.status !== 'pending') {
-      return res.status(400).json({ error: 'PR is already processed' });
+      return res.status(400).json({ error: 'PR already processed' });
     }
 
-    const userId = pressRelease.userId;
+    if (pressRelease.isWalletDeducted) {
+      return res.status(400).json({ error: 'Wallet already deducted for this PR' });
+    }
+
     const plan = pressRelease.selectedPlan;
-
     if (!plan || !plan.credits) {
-      return res.status(400).json({ error: "Selected plan is invalid" });
+      return res.status(400).json({ error: "Invalid plan" });
     }
 
-    // ✅ DEBIT wallet — this already updates wallet + logs transaction
-    await debitWallet(userId, plan.credits, `Credit used for PR ${pressRelease.prId}`);
+    // ✅ Wallet debit (single source of truth)
+    await debitWallet(
+      pressRelease.userId,
+      plan.credits,
+      `PR Approved (${pressRelease.prId})`
+    );
 
-    // ✅ Approve PR after successful wallet deduction
+    // ✅ Update PR AFTER successful debit
     pressRelease.status = "published";
+    pressRelease.isWalletDeducted = true;
+    pressRelease.adminDecisionAt = new Date();
+
     await pressRelease.save();
 
-    res.status(200).json({
-      message: 'PR approved and wallet debited successfully',
+    return res.status(200).json({
+      message: "PR approved and wallet deducted successfully",
       pressRelease
     });
 
   } catch (error) {
     console.error(error);
 
-    // Return custom message if the debitWallet throws "Insufficient wallet balance"
-   if (error.message === "Insufficient wallet balance") {
-  return res.status(400).json({ error: error.message });
-}
+    if (error.message === "Insufficient wallet balance") {
+      return res.status(400).json({ error: error.message });
+    }
 
-
-    res.status(500).json({ error: 'Server error during PR approval' });
+    res.status(500).json({ error: "Server error during PR approval" });
   }
 };
+
+const rejectPressRelease = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+
+    const pressRelease = await PressRelease.findById(id);
+
+    if (!pressRelease) {
+      return res.status(404).json({ error: "PR not found" });
+    }
+
+    if (pressRelease.status !== 'pending') {
+      return res.status(400).json({ error: "PR already processed" });
+    }
+
+    // ❌ NO wallet deduction
+    pressRelease.status = "rejected";
+    pressRelease.adminDecisionAt = new Date();
+
+    await pressRelease.save();
+
+    return res.status(200).json({
+      message: "PR rejected successfully (no wallet deduction)",
+      pressRelease
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error during PR rejection" });
+  }
+};
+
+
 
 
 module.exports = {
@@ -335,5 +380,6 @@ module.exports = {
   deletePressRelease,
   getPRStats,
   getPRHistory,
-  approvePressRelease
+  approvePressRelease,
+  rejectPressRelease
 };

@@ -31,6 +31,10 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Uploaded files (runtime data)
+backend/uploads/
+
+
 # Others
 *.log
 *.pid

@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import DownloadIcon from '@mui/icons-material/Download';
 
-import { getAllPressReleases,downloadPressReleasePDF} from "../../services/pressReleaseService";
+import { getAllPressReleases,downloadPressReleasePDF,approvePressRelease,rejectPressRelease} from "../../services/pressReleaseService";
 
 const AdminPressReleaseTable = () => {
   const [prs, setPrs] = useState([]);
@@ -46,6 +46,41 @@ const AdminPressReleaseTable = () => {
 
     fetchPRs();
   }, []);
+
+
+  const handleApprove = async (id) => {
+  if (!window.confirm("Approve this press release?")) return;
+
+  try {
+    await approvePressRelease(id);
+
+    setPrs(prev =>
+      prev.map(pr =>
+        pr._id === id ? { ...pr, status: "published" } : pr
+      )
+    );
+  } catch (error) {
+    alert(error.response?.data?.error || "Approval failed");
+  }
+};
+
+const handleReject = async (id) => {
+  const reason = prompt("Enter rejection reason");
+  if (!reason) return;
+
+  try {
+    await rejectPressRelease(id, { reason });
+
+    setPrs(prev =>
+      prev.map(pr =>
+        pr._id === id ? { ...pr, status: "rejected" } : pr
+      )
+    );
+  } catch (error) {
+    alert(error.response?.data?.error || "Rejection failed");
+  }
+};
+
 
   // Pagination handlers
   const handleChangePage = (event, newPage) => {
@@ -84,7 +119,7 @@ const AdminPressReleaseTable = () => {
     {[
       "PR ID","Download", "Title", "Summary", "Content", "Image", "Quote",
       "City", "Tags", "Scheduled At", "Status", "Plan",
-      "Category", "Created", "Updated",
+      "Category", "Created", "Updated","Actions"
     ].map((header) => (
       <TableCell
         key={header}
@@ -180,6 +215,51 @@ const AdminPressReleaseTable = () => {
                       </TableCell>
                       <TableCell>
                         {new Date(pr.updatedAt).toLocaleString()}
+                      </TableCell>
+
+                                          {/* ✅ ACTIONS COLUMN */}
+                      <TableCell>
+                        {pr.status === "pending" ? (
+                          <>
+                            <Button
+                              size="small"
+                              color="success"
+                              variant="contained"
+                              onClick={() => handleApprove(pr._id)}
+                            >
+                              Approve
+                            </Button>
+                          
+
+                            <Button
+                              size="small"
+                              color="error"
+                              variant="contained"
+
+                              
+                              sx={{ mt: 2 }}
+                              onClick={() => handleReject(pr._id)}
+                            >
+                              Reject
+                            </Button>
+                          </>
+                        ) : (
+                          <Typography
+                              variant="caption"
+                              sx={{
+                                fontWeight: "bold",
+                                color:
+                                  pr.status === "published"
+                                    ? "green"
+                                    : pr.status === "rejected"
+                                    ? "red"
+                                    : "gray"
+                              }}
+                            >
+                              {pr.status.toUpperCase()}
+                            </Typography>
+
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

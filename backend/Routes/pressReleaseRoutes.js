@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { createPressRelease,getAllPressReleases,getPressReleaseById,updatePressRelease,deletePressRelease, getPressReleaseByPrId,getPRHistory,getPRStats,approvePressRelease} =
+const { createPressRelease,getAllPressReleases,getPressReleaseById,updatePressRelease,deletePressRelease, getPressReleaseByPrId,getPRHistory,getPRStats,approvePressRelease,rejectPressRelease} =
 require('../Controllers/PressReleaseController');
 const ensureAuthenticated = require('../Middleware/Auth');
 const upload = require('../Middleware/MulterConfig');
@@ -34,5 +34,8 @@ router.put('/:id', ensureAuthenticated, upload.single("image"), updatePressRelea
 router.delete('/:id',ensureAuthenticated,deletePressRelease);       // Delete by ID
 // 🟢 New Route for Admin Approval + Wallet Deduction
 router.put('/approve/:id', ensureAuthenticated, isAdmin, approvePressRelease);
+// 🔴 New Route for Admin Reject (NO wallet deduction)
+router.put('/reject/:id', ensureAuthenticated, isAdmin, rejectPressRelease);
+
 
 module.exports = router;
