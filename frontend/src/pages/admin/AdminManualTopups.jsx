@@ -119,7 +119,7 @@ const AdminManualTopups = () => {
       >
         <Table stickyHeader>
           <TableHead>
-            <TableRow className="bg-indigo-100">
+            <TableRow className="bg-indigo-100">. 
               {[
                 "Sr No",
                 "Client Name",
