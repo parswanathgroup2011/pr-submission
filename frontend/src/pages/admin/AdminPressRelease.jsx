@@ -16,6 +16,8 @@ import {
 } from "@mui/material";
 import DownloadIcon from '@mui/icons-material/Download';
 
+import { getAllUsers } from "../../services/adminApi";
+
 import { getAllPressReleases,downloadPressReleasePDF,approvePressRelease,rejectPressRelease} from "../../services/pressReleaseService";
 
 const AdminPressReleaseTable = () => {
@@ -117,7 +119,7 @@ const handleReject = async (id) => {
             <TableHead>
   <TableRow>
     {[
-      "PR ID","Download", "Title", "Summary", "Content", "Image", "Quote",
+      "PR ID","Client name","Download", "Title", "Summary", "Content", "Image", "Quote",
       "City", "Tags", "Scheduled At", "Status", "Plan",
       "Category", "Created", "Updated","Actions"
     ].map((header) => (
@@ -155,6 +157,11 @@ const handleReject = async (id) => {
                       sx={{ "&:hover": { backgroundColor: "#f5f5f5" } }}
                     >
                       <TableCell>{pr.prId}</TableCell>
+
+                      <TableCell>
+  {pr.userId?.clientName|| "N/A"}
+</TableCell>
+
                     <TableCell>
   <Button
     variant="outlined"        // subtle border
