@@ -79,7 +79,7 @@ const createPressRelease = async (req, res) => {
 const getAllPressReleases = async (req, res) => {
   try {
     const pressReleases = await PressRelease.find()
-      .populate("userId", "name email")
+      .populate("userId", "clientName email")
       .populate("selectedPlan", "name")
       .populate("selectedCategory", "name")
       .sort({ createdAt: -1 });
