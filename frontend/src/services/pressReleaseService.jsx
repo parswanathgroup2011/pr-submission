@@ -19,16 +19,11 @@ export const createPressRelease = async (prFormData) => {
 
 export const getPRStats = async () => {
   const { data } = await apiClient.get(`${API_ENDPOINT}/stats`);
-  /* 
-     BE →  { total, pending, approved, rejected }
-     FE →  { totalPR, pendingPR, publishedPR, rejectPR }
-  */
-     return {
+  return {
       totalPR:     data.totalPR     ?? data.total     ?? 0,
       pendingPR:   data.pendingPR   ?? data.pending   ?? 0,
       publishedPR: data.publishedPR ?? data.approved  ?? 0,
-      // Dashboard prop is `rejectPR`, but BE sends `rejectedPR`
-      rejectedPR:    data.rejectedPR  ?? data.rejected  ?? 0,
+      rejectedPR:  data.rejectedPR  ?? data.rejected  ?? 0,
     };
 };
 

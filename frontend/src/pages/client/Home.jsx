@@ -81,7 +81,7 @@ function Home() {
   const [editingPR, setEditingPR] = useState(null); // to hold PR being edited
 
   const [dashboardStats, setDashboardStats] = useState({
-    totalPR: 0, pendingPR: 0, publishedPR: 0, rejectPR: 0,
+    totalPR: 0, pendingPR: 0, publishedPR: 0, rejectedPR: 0,
   });
   const [prHistory, setPrHistory] = useState([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -104,7 +104,7 @@ const [totalPages, setTotalPages] = useState(1);
       ]);
 
       setDashboardStats(statsData || {
-        totalPR: 0, pendingPR: 0, publishedPR: 0, rejectPR: 0
+        totalPR: 0, pendingPR: 0, publishedPR: 0, rejectedPR: 0
       });
       setPrHistory(historyResponse.pressRelease || []);
       setTotalPages(historyResponse.totalPages || 1);
@@ -157,7 +157,7 @@ const [totalPages, setTotalPages] = useState(1);
           <StatCard title="Published PR" value={dashboardStats.publishedPR} loading={isLoadingStats} />
         </Grid>
         <Grid size={{xs:12,sm:6,md:3}} >
-          <StatCard title="Reject PR" value={dashboardStats.rejectPR} loading={isLoadingStats} />
+          <StatCard title="Rejected PR" value={dashboardStats.rejectedPR} loading={isLoadingStats} />
         </Grid>
       </Grid>
 
