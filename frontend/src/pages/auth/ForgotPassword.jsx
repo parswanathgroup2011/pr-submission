@@ -1,9 +1,10 @@
 import { useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import "./ForgotPassword.css";
+import { Box, Button, Stack } from "@mui/material";
+import { useNavigate, Link } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AuthLayout from "../../components/ui/AuthLayout";
+import FormField from "../../components/ui/FormField";
 import { forgotPassword } from "../../services/auth";
-
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -15,11 +16,9 @@ const ForgotPassword = () => {
     e.preventDefault();
     setMessage("");
     setError("");
-
     try {
       const response = await forgotPassword(email);
       setMessage(response.message);
-
       if (response.success) {
         navigate("/reset-password", { state: { email } });
       }
@@ -29,22 +28,41 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="forgot-container">
-      <h2 className="forgot-title">Forgot Password</h2>
-      <form onSubmit={handleSendOtp} className="forgot-form">
-        <input
-          type="email"
-          placeholder="Enter your email"
-          className="forgot-input"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <button type="submit" className="forgot-button">Send OTP</button>
-      </form>
-      {message && <p className="forgot-message success">{message}</p>}
-      {error && <p className="forgot-message error">{error}</p>}
-    </div>
+    <AuthLayout
+      title="Forgot password"
+      subtitle="Enter your email and we will send a one-time code."
+    >
+      <Box component="form" onSubmit={handleSendOtp}>
+        <Stack spacing={2}>
+          <FormField
+            label="Email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+          />
+          <Button type="submit" variant="contained" size="large">
+            Send OTP
+          </Button>
+          {message && (
+            <Box sx={{ color: "success.main", fontSize: 14 }}>{message}</Box>
+          )}
+          {error && (
+            <Box sx={{ color: "error.main", fontSize: 14 }}>{error}</Box>
+          )}
+          <Button
+            component={Link}
+            to="/login"
+            variant="contained"
+            startIcon={<ArrowBackIcon sx={{ fontSize: 20 }} />}
+            sx={{ px: 2.25, minHeight: 42, fontSize: 15 }}
+          >
+            Back to login
+          </Button>
+        </Stack>
+      </Box>
+    </AuthLayout>
   );
 };
 

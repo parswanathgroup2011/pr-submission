@@ -145,11 +145,10 @@ export default function PRSubmissionModal({
       fullWidth
       maxWidth="md"
       scroll="paper"
-      sx={{ '& .MuiDialog-container > .MuiPaper-root': { borderRadius: 3, p: 3 } }}
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        Submit New Press Release
-        <IconButton onClick={onClose} disabled={isSubmitting}>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pr: 1.5 }}>
+        {editPressRelease ? "Edit press release" : "Submit press release"}
+        <IconButton onClick={onClose} disabled={isSubmitting} aria-label="Close">
           <CloseIcon />
         </IconButton>
       </DialogTitle>

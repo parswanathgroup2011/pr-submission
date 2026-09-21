@@ -1,21 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  IconButton,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
-import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-
-import {
-  getAdminNotifications,
-  markAsRead,
-} from "../../services/notificationApi";
+import { getAdminNotifications, markAsRead } from "../../services/notificationApi";
+import NotificationList from "../../components/ui/NotificationList";
 
 const AdminNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -41,54 +26,15 @@ const AdminNotifications = () => {
     loadNotifications();
   };
 
-  if (loading) {
-    return (
-      <Box className="flex justify-center items-center h-screen">
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
-    <Box className="p-4">
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-        Admin Notifications
-      </Typography>
-
-      <Paper sx={{ borderRadius: 3, p: 2 }}>
-        <List>
-          {notifications.length === 0 ? (
-            <Typography sx={{ textAlign: "center", py: 3 }}>
-              No notifications available
-            </Typography>
-          ) : (
-            notifications.map((noti) => (
-              <ListItem
-                key={noti._id}
-                sx={{
-                  backgroundColor: noti.isRead ? "#fafafa" : "#fff3cd",
-                  mb: 1,
-                  borderRadius: 2,
-                }}
-                secondaryAction={
-                  !noti.isRead && (
-                    <IconButton onClick={() => handleMarkRead(noti._id)}>
-                      <MarkEmailReadIcon color="success" />
-                    </IconButton>
-                  )
-                }
-              >
-                <NotificationsActiveIcon sx={{ mr: 2 }} color="warning" />
-                <ListItemText
-                  primary={noti.title}
-                  secondary={noti.message}
-                />
-              </ListItem>
-            ))
-          )}
-        </List>
-      </Paper>
-    </Box>
+    <NotificationList
+      title="Notifications"
+      description="Payment approvals and admin alerts."
+      items={notifications}
+      loading={loading}
+      onMarkRead={handleMarkRead}
+      backTo="/admin"
+    />
   );
 };
 

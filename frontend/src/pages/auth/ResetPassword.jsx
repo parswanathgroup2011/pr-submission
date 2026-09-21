@@ -1,9 +1,10 @@
 import { useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import './ResetPassword.css';
+import { Box, Button, Stack } from "@mui/material";
+import { Link } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AuthLayout from "../../components/ui/AuthLayout";
+import FormField from "../../components/ui/FormField";
 import { resetPassword } from "../../services/auth";
-
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("");
@@ -16,51 +17,62 @@ const ResetPassword = () => {
     e.preventDefault();
     setMessage("");
     setError("");
-
     try {
       const res = await resetPassword(email, otp, newPassword);
       setMessage(res.message);
-
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     }
   };
 
   return (
-    <div className="resetcontainer">
-      <h2 className="resetword">Reset Password</h2>
-      <form className="resetform"  onSubmit={handleReset}>
-        <input
-          type="email"
-          placeholder="Enter your email"
-          className="resetinput"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Enter OTP"
-          className="resetinput"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Enter new password"
-          className="resetinput"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="reset-button">
-          Reset Password
-        </button>
-      </form>
-      {message && <p className="text-green-600 mt-3">{message}</p>}
-      {error && <p className="text-red-600 mt-3">{error}</p>}
-    </div>
+    <AuthLayout
+      title="Reset password"
+      subtitle="Enter the OTP from your email and choose a new password."
+    >
+      <Box component="form" onSubmit={handleReset}>
+        <Stack spacing={2}>
+          <FormField
+            label="Email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <FormField
+            label="OTP"
+            required
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+          />
+          <FormField
+            label="New password"
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <Button type="submit" variant="contained" size="large">
+            Reset password
+          </Button>
+          {message && (
+            <Box sx={{ color: "success.main", fontSize: 14 }}>{message}</Box>
+          )}
+          {error && (
+            <Box sx={{ color: "error.main", fontSize: 14 }}>{error}</Box>
+          )}
+          <Button
+            component={Link}
+            to="/login"
+            variant="contained"
+            startIcon={<ArrowBackIcon sx={{ fontSize: 20 }} />}
+            sx={{ px: 2.25, minHeight: 42, fontSize: 15 }}
+          >
+            Back to login
+          </Button>
+        </Stack>
+      </Box>
+    </AuthLayout>
   );
 };
 

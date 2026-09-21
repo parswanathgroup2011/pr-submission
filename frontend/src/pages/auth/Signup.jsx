@@ -1,453 +1,230 @@
-import React ,{useState}from "react";
-import {Link,useNavigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Grid,
+  Link as MuiLink,
+  MenuItem,
+  Stack,
+  Typography,
+} from "@mui/material";
+import AuthLayout from "../../components/ui/AuthLayout";
+import FormField from "../../components/ui/FormField";
 import { handleError, handleSuccess } from "../../utils";
-import './Signup.css';
-import axios from 'axios'; 
 import { signupUser } from "../../services/auth";
 
-
 function Signup() {
-  const [signupInfo,setSignupInfo] = useState({
-    clientName:"",
-    clientType:"",
-    companyName:"",
-    email:"",
-    mobileNumber:"",
-    address:"",
-    state:"",
-    city:"",
-    pincode:"",
-    website:"",
-    password:"",
-    confirmPassword:"",
-    profileImage:null,
-    businessLogo:null,
-    gstNumber:"",
-    gstImage:null,
-    panNumber:"",
-    panImage:null,
-    ifscCode:"",
-    bankName:"",
-    branchName:"",
-    micrCode:"",
-    branchCode:"",
-    authorisedName:"",
-    accountNumber:""
-
- })
-
-
-
-  const navigate = useNavigate()
-
+  const [signupInfo, setSignupInfo] = useState({
+    clientName: "",
+    clientType: "",
+    companyName: "",
+    email: "",
+    mobileNumber: "",
+    address: "",
+    state: "",
+    city: "",
+    pincode: "",
+    website: "",
+    password: "",
+    confirmPassword: "",
+    profileImage: null,
+    businessLogo: null,
+    gstNumber: "",
+    gstImage: null,
+    panNumber: "",
+    panImage: null,
+    ifscCode: "",
+    bankName: "",
+    branchName: "",
+    micrCode: "",
+    branchCode: "",
+    authorisedName: "",
+    accountNumber: "",
+  });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    console.log("Changing:", name, "to", value); // Debugging log
-    
-  
-    setSignupInfo((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setSignupInfo((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-  
 
-//for images eg.profile image and business logo
+  const handleFileChange = (e, fieldName) => {
+    setSignupInfo((prev) => ({ ...prev, [fieldName]: e.target.files[0] }));
+  };
 
-  const handleFileChange =(e,fieldName) => {
-    const file =e.target.files[0];
-    console.log("select:",file)
-    setSignupInfo((prev) => ({
-      ...prev,
-    [fieldName]:file
-    }) )
-};
-
-
-const handleSignup = async (e) => {
-  e.preventDefault();
-  console.log("Signup button clicked");
-
-  const { clientName, email, password, confirmPassword } = signupInfo;
-
-  if (!clientName || !email || !password || !confirmPassword) {
-    return handleError("Name, email and password are required");
-  }
-
-  if (password !== confirmPassword) {
-    return handleError("Passwords do not match");
-  }
-
-  try {
-    const { success, message, error } = await signupUser(signupInfo);
-
-    if (success) {
-      handleSuccess(message);
-      setTimeout(() => {
-        navigate("/login");
-      }, 1000);
-    } else if (error) {
-      const details = error?.details?.[0]?.message;
-      handleError(details || error);
-    } else {
-      handleError(message);
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    const { clientName, email, password, confirmPassword } = signupInfo;
+    if (!clientName || !email || !password || !confirmPassword) {
+      return handleError("Name, email and password are required");
     }
-  } catch (err) {
-    handleError("Something went wrong");
-    console.log(err);
-  }
-};
+    if (password !== confirmPassword) {
+      return handleError("Passwords do not match");
+    }
+    try {
+      const { success, message, error } = await signupUser(signupInfo);
+      if (success) {
+        handleSuccess(message);
+        setTimeout(() => navigate("/login"), 1000);
+      } else if (error) {
+        handleError(error?.details?.[0]?.message || error);
+      } else {
+        handleError(message);
+      }
+    } catch (err) {
+      handleError("Something went wrong");
+      console.log(err);
+    }
+  };
 
   return (
-    <div className="signup-container">
-      <h2 className="registration-name">Registration Form</h2>
-      <form className="signup-form" onSubmit={handleSignup}>
-     
-    <fieldset className="section">
-      <legend>General Information</legend>
-
-      <div className="namefield">
-      <div className="form-group"> 
-        <label htmlFor="clientType">Client Type</label>
-          
-        <select
-        onChange={handleChange}
-        name="clientType"
-        autoFocus
-        value={signupInfo.clientType}
-        >
-        <option value="">Select Client Type</option>
-        <option value="B2B">B2B</option>
-        <option value="B2C">B2C</option>
-        </select>
-        </div>
-
-        
-        <div className="form-group">
-          <label htmlFor="name">Client Name</label>
-          <input
-           onChange={handleChange}
-            type="text"
-            name="clientName"
-            
-            placeholder="Client Name"
-            required
-            value={signupInfo.clientName}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="companyName">Company Name</label>
-          <input
-           onChange={handleChange}
-            type="text"
-            name="companyName"
-            
-            placeholder="Company Name"
-            required
-            value={signupInfo.companyName}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input onChange={handleChange}
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            value={signupInfo.email}
-          />
-        </div>
-
-
-        <div className="form-group">
-          <label htmlFor="mobileNumber">Mobile Number</label>
-          <input onChange={handleChange}
-            type="tel"
-            name="mobileNumber"
-            placeholder="Mobile Number"
-            pattern="[0-9]{10}"
-            maxLength={10}
-            inputMode="numeric"
-            required
-            value={signupInfo.mobileNumber}
-          />
-        </div>
-
-          
-        
-
-        <div className="form-group">
-          <label htmlFor="address">Address</label>
-          <input onChange={handleChange}
-            type="text"
-            name="address"
-            placeholder="Address"
-            required
-            value={signupInfo.address}
-          />
-        </div>
-
-
-        <div className="form-group">
-          <label htmlFor="state">State</label>
-          <input onChange={handleChange}
-            type="text"
-            name="state"
-            placeholder="State"
-            value={signupInfo.state}
-          />
-        </div>
-
-
-
-        <div className="form-group">
-
-          <label htmlFor="city">City</label>
-          <input onChange={handleChange}
-            type="text"
-            name="city"
-            placeholder="City"
-            value={signupInfo.city}
-          />
-        </div>
-
-
-
-        <div className="form-group">
-          <label htmlFor="pincode">Pincode</label>
-          <input onChange={handleChange}
-            type="text"
-            name="pincode"
-            placeholder="Pincode"
-            pattern="\d{6}"
-            maxLength={6}
-            required
-            value={signupInfo.pincode}
-          />
-        </div>
-
-
-
-        <div className="form-group">
-          <label htmlFor="website">Website</label>
-          <input onChange={handleChange}
-            type="url"
-            name="website"
-            placeholder="Website"
-            value={signupInfo.website}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="profileImage">Profile Image</label>
-          <input 
-          onChange={(e) => handleFileChange(e,"profileImage")}
-          type="file"
-          name="profileImage" 
-          accept="image/png, image/jpeg, image/jpg" 
-          />
-        </div>
-
-
-        <div className="form-group">
-          <label htmlFor="businessLogo">Business Logo</label>
-          <input 
-          onChange={(e) => handleFileChange(e,"businessLogo")}
-          type="file"
-          name="businessLogo" 
-          accept="image/png, image/jpeg, image/jpg" 
-          />
-        </div>
-
-
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input onChange={handleChange}
-            type="password"
-            name="password"
-            placeholder="Enter your password"
-            value={signupInfo.password}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-        
-          <label htmlFor="confirmPassword">Confirm password</label>
-          <input onChange={handleChange}
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm your password"
-            value={signupInfo.confirmPassword}
-            required
-          />
-        </div></div>
-        </fieldset>
-
-
-        <fieldset className="section">
-          <legend>Proof Details</legend>
-          <div className="namefield">
-          <div className="form-group">
-            <label>GST Number</label>
-            <input onChange={handleChange}
-            type="text"
-            name="gstNumber"
-            placeholder="GST Number"
-            value={signupInfo.gstNumber}
+    <AuthLayout
+      title="Create an account"
+      subtitle="Register your company to submit press releases."
+      maxWidth={880}
+    >
+      <Box component="form" onSubmit={handleSignup}>
+        <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 600 }}>
+          General information
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              select
+              label="Client type"
+              name="clientType"
+              value={signupInfo.clientType}
+              onChange={handleChange}
+              required
+            >
+              <MenuItem value="">Select client type</MenuItem>
+              <MenuItem value="B2B">B2B</MenuItem>
+              <MenuItem value="B2C">B2C</MenuItem>
+            </FormField>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Client name" name="clientName" required value={signupInfo.clientName} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Company name" name="companyName" required value={signupInfo.companyName} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Email" name="email" type="email" required value={signupInfo.email} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Mobile number" name="mobileNumber" required value={signupInfo.mobileNumber} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Address" name="address" required value={signupInfo.address} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <FormField label="State" name="state" value={signupInfo.state} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <FormField label="City" name="city" value={signupInfo.city} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <FormField label="Pincode" name="pincode" required value={signupInfo.pincode} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Website" name="website" value={signupInfo.website} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Password" name="password" type="password" required value={signupInfo.password} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Confirm password" name="confirmPassword" type="password" required value={signupInfo.confirmPassword} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              label="Profile image"
+              type="file"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ accept: "image/png, image/jpeg, image/jpg" }}
+              onChange={(e) => handleFileChange(e, "profileImage")}
             />
-          </div>
-
-          <div className="form-group">
-          <label>GST Image</label>
-          <input 
-          onChange={(e) => handleFileChange(e,"gstImage")}
-          type="file"
-          name="gstImage" 
-          accept="image/png, image/jpeg, image/jpg" 
-          />
-        </div>
-
-         <div className="form-group">
-            <label>PAN Number</label>
-            <input onChange={handleChange}
-            type="text"
-            name="panNumber"
-            placeholder="PAN Number"
-            value={signupInfo.panNumber}
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              label="Business logo"
+              type="file"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ accept: "image/png, image/jpeg, image/jpg" }}
+              onChange={(e) => handleFileChange(e, "businessLogo")}
             />
-          </div>
+          </Grid>
+        </Grid>
 
-
-
-          <div className="form-group">
-          <label>PAN Image</label>
-          <input 
-          onChange={(e) => handleFileChange(e,"panImage")}
-          type="file"
-          name="panImage" 
-          accept="image/png, image/jpeg, image/jpg" 
-          />
-        </div></div>
-
-        </fieldset>
-
-        <fieldset className="section">
-          <legend>Bank Details</legend>
-          <div className="namefield">
-          <div className="form-group">
-            <label>IFSC Code</label>
-            <input onChange={handleChange}
-            type="text"
-            name="ifscCode"
-            placeholder="IFSC Code"
-            value={signupInfo.ifscCode} 
+        <Typography variant="subtitle1" sx={{ mt: 3, mb: 1.5, fontWeight: 600 }}>
+          Proof details
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="GST number" name="gstNumber" value={signupInfo.gstNumber} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              label="GST image"
+              type="file"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ accept: "image/png, image/jpeg, image/jpg" }}
+              onChange={(e) => handleFileChange(e, "gstImage")}
             />
-          </div>
-
-          <div className="form-group">
-            <label>Bank Name</label>
-            <input onChange={handleChange}
-            type="text"
-            name="bankName"
-            placeholder="Bank Name"
-            value={signupInfo.bankName} 
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="PAN number" name="panNumber" value={signupInfo.panNumber} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField
+              label="PAN image"
+              type="file"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ accept: "image/png, image/jpeg, image/jpg" }}
+              onChange={(e) => handleFileChange(e, "panImage")}
             />
-          </div>
+          </Grid>
+        </Grid>
 
-          <div className="form-group">
-            <label>Branch Name</label>
-            <input onChange={handleChange}
-            type="text"
-            name="branchName"
-            placeholder="Branch Name"
-            value={signupInfo.branchName} 
-            />
-          </div>
+        <Typography variant="subtitle1" sx={{ mt: 3, mb: 1.5, fontWeight: 600 }}>
+          Bank details
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="IFSC code" name="ifscCode" value={signupInfo.ifscCode} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Bank name" name="bankName" value={signupInfo.bankName} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Branch name" name="branchName" value={signupInfo.branchName} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="MICR code" name="micrCode" value={signupInfo.micrCode} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Branch code" name="branchCode" value={signupInfo.branchCode} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Authorised name" name="authorisedName" value={signupInfo.authorisedName} onChange={handleChange} />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormField label="Account number" name="accountNumber" value={signupInfo.accountNumber} onChange={handleChange} />
+          </Grid>
+        </Grid>
 
-
-          <div className="form-group">
-            <label>MICR Code</label>
-            <input onChange={handleChange}
-            type="text"
-            name="micrCode"
-            placeholder="MICR Code"
-            value={signupInfo.micrCode} 
-            />
-          </div>
-
-
-          <div className="form-group">
-            <label>Branch Code</label>
-            <input onChange={handleChange}
-            type="text"
-            name="branchCode"
-            placeholder="Branch Code"
-            value={signupInfo.branchCode} 
-            />
-          </div>
-
-
-          <div className="form-group">
-            <label>Authorised Name</label>
-            <input onChange={handleChange}
-            type="text"
-            name="authorisedName"
-            placeholder="Authorised Name"
-            value={signupInfo.authorisedName} 
-            />
-          </div>
-
-
-          <div className="form-group">
-            <label>State Name</label>
-            <input onChange={handleChange}
-            type="text"
-            name="state"
-            placeholder="State Name"
-            value={signupInfo.state} 
-            />
-          </div>
-
-          <div className="form-group">
-            <label>City Name</label>
-            <input onChange={handleChange}
-            type="text"
-            name="city"
-            placeholder="City Name"
-            value={signupInfo.city} 
-            />
-          </div>
-
-
-
-
-          <div className="form-group">
-            <label>Account Number</label>
-            <input onChange={handleChange}
-            type="text"
-            name="accountNumber"
-            placeholder="Account Number"
-            value={signupInfo.accountNumber} 
-            />
-          </div></div>
-
-
-        </fieldset>
-
-        <div className="signup-button">
-        <button type="submit">Signup</button>
-        <span className="login-link">
-          Already have an account? <Link to="/login">Login</Link>
-        </span></div>
-      </form>
-      <ToastContainer />
-    </div>
+        <Stack spacing={2} sx={{ mt: 3 }}>
+          <Button type="submit" variant="contained" size="large">
+            Sign up
+          </Button>
+          <Box sx={{ textAlign: "center", color: "text.secondary" }}>
+            Already have an account?{" "}
+            <MuiLink component={Link} to="/login" underline="hover">
+              Login
+            </MuiLink>
+          </Box>
+        </Stack>
+      </Box>
+    </AuthLayout>
   );
 }
 

@@ -1,292 +1,202 @@
-// AdminPressReleaseTable.jsx
 import React, { useEffect, useState } from "react";
+import { Avatar, Box } from "@mui/material";
+import { useSearchParams } from "react-router-dom";
+import DownloadIcon from "@mui/icons-material/Download";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-  Typography,
-  Avatar,
-  TablePagination,
-  Button
-} from "@mui/material";
-import DownloadIcon from '@mui/icons-material/Download';
+  getAllPressReleases,
+  downloadPressReleasePDF,
+  approvePressRelease,
+  rejectPressRelease,
+} from "../../services/pressReleaseService";
+import PageHeader from "../../components/ui/PageHeader";
+import DataTable from "../../components/ui/DataTable";
+import AppPagination from "../../components/ui/AppPagination";
+import StatusBadge from "../../components/ui/StatusBadge";
+import ActionIconButton from "../../components/ui/ActionIconButton";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import FilterBar from "../../components/ui/FilterBar";
+import StatusFilter from "../../components/ui/StatusFilter";
+import { handleError, handleSuccess } from "../../utils";
 
-import { getAllUsers } from "../../services/adminApi";
+const stripHtml = (html) =>
+  String(html || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
 
-import { getAllPressReleases,downloadPressReleasePDF,approvePressRelease,rejectPressRelease} from "../../services/pressReleaseService";
-
-const AdminPressReleaseTable = () => {
-  const [prs, setPrs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Pagination states
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  useEffect(() => {
-    const fetchPRs = async () => {
-      try {
-        let data = await getAllPressReleases();
-
-        // 🔥 Sort latest first (by createdAt)
-        data.sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
-        setPrs(data);
-      } catch (error) {
-        console.error("❌ Error fetching PRs:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPRs();
-  }, []);
-
-
-  const handleApprove = async (id) => {
-  if (!window.confirm("Approve this press release?")) return;
-
-  try {
-    await approvePressRelease(id);
-
-    setPrs(prev =>
-      prev.map(pr =>
-        pr._id === id ? { ...pr, status: "published" } : pr
-      )
-    );
-  } catch (error) {
-    alert(error.response?.data?.error || "Approval failed");
-  }
-};
-
-const handleReject = async (id) => {
-  if (!window.confirm("Are you sure you want to reject this press release?")) return;
-
-  try {
-    await rejectPressRelease(id); // 👈 no reason sent
-
-    setPrs(prev =>
-      prev.map(pr =>
-        pr._id === id ? { ...pr, status: "rejected" } : pr
-      )
-    );
-  } catch (error) {
-    alert(error.response?.data?.error || "Rejection failed");
-  }
-};
-
-
-
-  // Pagination handlers
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-  const getImageUrl = (filePath) => {
+const getImageUrl = (filePath) => {
   if (!filePath) return "";
-  const cleanedPath = filePath.replace(/^uploads\//, ""); // remove leading "uploads/" if present
+  const cleanedPath = filePath.replace(/^uploads\//, "");
   const baseUrl = import.meta.env.VITE_API_URL.replace("/api", "");
   return `${baseUrl}/uploads/${cleanedPath}`;
 };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+const AdminPressReleaseTable = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") || "all";
+  const [prs, setPrs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
+  const [confirm, setConfirm] = useState({ open: false, type: null, id: null });
+
+  useEffect(() => {
+    const fetchPRs = async () => {
+      try {
+        const data = await getAllPressReleases();
+        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setPrs(data);
+      } catch (error) {
+        console.error("Error fetching PRs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPRs();
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
+
+  const filteredPrs =
+    statusFilter === "all" ? prs : prs.filter((pr) => pr.status === statusFilter);
+
+  const runAction = async () => {
+    const { type, id } = confirm;
+    try {
+      if (type === "approve") {
+        await approvePressRelease(id);
+        setPrs((prev) => prev.map((pr) => (pr._id === id ? { ...pr, status: "published" } : pr)));
+        handleSuccess("Press release approved");
+      } else {
+        await rejectPressRelease(id);
+        setPrs((prev) => prev.map((pr) => (pr._id === id ? { ...pr, status: "rejected" } : pr)));
+        handleSuccess("Press release rejected");
+      }
+    } catch (error) {
+      handleError(error.response?.data?.error || "Action failed");
+    } finally {
+      setConfirm({ open: false, type: null, id: null });
+    }
   };
 
-  if (loading)
-    return (
-      <div style={{ display: "flex", justifyContent: "center", marginTop: 40 }}>
-        <CircularProgress />
-      </div>
-    );
+  const totalPages = Math.ceil(filteredPrs.length / rowsPerPage) || 1;
+  const paginated = filteredPrs.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+  const columns = [
+    { id: "prId", label: "PR ID" },
+    { id: "client", label: "Client", render: (pr) => pr.userId?.clientName || "N/A" },
+    { id: "title", label: "Title" },
+    { id: "summary", label: "Summary", render: (pr) => pr.summary || "—" },
+    { id: "content", label: "Content", render: (pr) => stripHtml(pr.content) || "—" },
+    {
+      id: "image",
+      label: "Image",
+      render: (pr) =>
+        pr.image ? (
+          <Avatar variant="rounded" src={getImageUrl(pr.image)} alt="PR" sx={{ width: 56, height: 40 }} />
+        ) : (
+          "—"
+        ),
+    },
+    { id: "quote", label: "Quote", render: (pr) => pr.quoteDescription || "—" },
+    { id: "city", label: "City" },
+    { id: "tags", label: "Tags", render: (pr) => pr.tags?.join(", ") || "—" },
+    {
+      id: "scheduledAt",
+      label: "Scheduled",
+      render: (pr) => (pr.scheduledAt ? new Date(pr.scheduledAt).toLocaleString() : "—"),
+    },
+    { id: "status", label: "Status", render: (pr) => <StatusBadge status={pr.status} /> },
+    { id: "plan", label: "Plan", render: (pr) => pr.selectedPlan?.name || "N/A" },
+    { id: "category", label: "Category", render: (pr) => pr.selectedCategory?.name || "N/A" },
+    { id: "created", label: "Created", render: (pr) => new Date(pr.createdAt).toLocaleString() },
+    { id: "updated", label: "Updated", render: (pr) => new Date(pr.updatedAt).toLocaleString() },
+    {
+      id: "actions",
+      label: "Actions",
+      render: (pr) => (
+        <Box sx={{ display: "flex", gap: 0.5 }}>
+          <ActionIconButton title="Download PDF" onClick={() => downloadPressReleasePDF(pr._id)}>
+            <DownloadIcon fontSize="small" />
+          </ActionIconButton>
+          {pr.status === "pending" && (
+            <>
+              <ActionIconButton
+                title="Approve"
+                color="success"
+                onClick={() => setConfirm({ open: true, type: "approve", id: pr._id })}
+              >
+                <CheckCircleOutlineIcon fontSize="small" />
+              </ActionIconButton>
+              <ActionIconButton
+                title="Reject"
+                color="error"
+                onClick={() => setConfirm({ open: true, type: "reject", id: pr._id })}
+              >
+                <CancelOutlinedIcon fontSize="small" />
+              </ActionIconButton>
+            </>
+          )}
+        </Box>
+      ),
+    },
+  ];
 
   return (
-    <div style={{ padding: "20px" }}>
-      <Typography variant="h5" gutterBottom>
-        📑 All Press Releases
-      </Typography>
-
-      <Paper sx={{ borderRadius: 3, boxShadow: 3 }}>
-        <TableContainer>
-          <Table stickyHeader>
-            <TableHead>
-  <TableRow>
-    {[
-      "PR ID","Client name","Download", "Title", "Summary", "Content", "Image", "Quote",
-      "City", "Tags", "Scheduled At", "Status", "Plan",
-      "Category", "Created", "Updated","Actions"
-    ].map((header) => (
-      <TableCell
-        key={header}
-        sx={{
-          backgroundColor: "#e0e7ff",  // Material Blue
-          color: "black",
-          fontWeight: "bold",
-          fontSize: 12,
-          textTransform: "uppercase",
-          borderBottom: "none"
-        }}
-      >
-        {header}
-      </TableCell>
-    ))}
-  </TableRow>
-</TableHead>
-
-            <TableBody>
-              {prs.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={14} align="center">
-                    No press releases found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                prs
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage) // 👈 pagination slice
-                  .map((pr) => (
-                    <TableRow
-                      key={pr._id}
-                      hover
-                      sx={{ "&:hover": { backgroundColor: "#f5f5f5" } }}
-                    >
-                      <TableCell>{pr.prId}</TableCell>
-
-                      <TableCell>
-  {pr.userId?.clientName|| "N/A"}
-</TableCell>
-
-                    <TableCell>
-  <Button
-    variant="outlined"        // subtle border
-    color="secondary"         // secondary color for contrast
-    size="small"
-    startIcon={<DownloadIcon />} // nice download icon
-    sx={{
-      textTransform: "none",   // keep text as-is
-      fontWeight: "bold",
-      borderRadius: 2,         // rounded corners
-      backgroundColor: "#f0f0f0",
-      "&:hover": {
-        backgroundColor: "#e0e0e0",
-        color: "#1976d2"
-      }
-    }}
-    onClick={() => downloadPressReleasePDF(pr._id)}
-  >
-    Download PDF
-  </Button>
-</TableCell>
-
-
-                      <TableCell>{pr.title}</TableCell>
-                      <TableCell>{pr.summary}</TableCell>
-                      <TableCell>
-                        <div
-                          dangerouslySetInnerHTML={{ __html: pr.content }}
-                          style={{ maxHeight: 80, overflow: "hidden" }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {pr.image ? (
-                          <Avatar
-                            variant="rounded"
-                            src={getImageUrl(pr.image)}
-                            alt="PR"
-                            sx={{ width: 60, height: 40 }}
-                          />
-
-                        ) : (
-                          "No Image"
-                        )}
-                      </TableCell>
-                      <TableCell>{pr.quoteDescription}</TableCell>
-                      <TableCell>{pr.city}</TableCell>
-                      <TableCell>{pr.tags?.join(", ")}</TableCell>
-                      <TableCell>
-                        {pr.scheduledAt
-                          ? new Date(pr.scheduledAt).toLocaleString()
-                          : "-"}
-                      </TableCell>
-                      <TableCell>{pr.status}</TableCell>
-                      <TableCell>{pr.selectedPlan?.name || "N/A"}</TableCell>
-                      <TableCell>{pr.selectedCategory?.name || "N/A"}</TableCell>
-                      <TableCell>
-                        {new Date(pr.createdAt).toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(pr.updatedAt).toLocaleString()}
-                      </TableCell>
-
-                                          {/* ✅ ACTIONS COLUMN */}
-                      <TableCell>
-                        {pr.status === "pending" ? (
-                          <>
-                            <Button
-                              size="small"
-                              color="success"
-                              variant="contained"
-                              onClick={() => handleApprove(pr._id)}
-                            >
-                              Approve
-                            </Button>
-                          
-
-                            <Button
-                              size="small"
-                              color="error"
-                              variant="contained"
-
-                              
-                              sx={{ mt: 2 }}
-                              onClick={() => handleReject(pr._id)}
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        ) : (
-                          <Typography
-                              variant="caption"
-                              sx={{
-                                fontWeight: "bold",
-                                color:
-                                  pr.status === "published"
-                                    ? "green"
-                                    : pr.status === "rejected"
-                                    ? "red"
-                                    : "gray"
-                              }}
-                            >
-                              {pr.status.toUpperCase()}
-                            </Typography>
-
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* ✅ Pagination Controls */}
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
-          count={prs.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-    </div>
+    <Box>
+      <PageHeader
+        title="Press releases"
+        description="Review, approve, reject, and download submissions."
+        showBack
+        backTo="/admin"
+        toolbar={
+          <FilterBar>
+            <StatusFilter
+              value={statusFilter}
+              onChange={(value) => {
+                if (!value || value === "all") setSearchParams({});
+                else setSearchParams({ status: value });
+              }}
+            />
+          </FilterBar>
+        }
+      />
+      <DataTable
+        columns={columns}
+        rows={paginated}
+        loading={loading}
+        emptyTitle={
+          statusFilter === "all"
+            ? "No press releases found"
+            : `No ${statusFilter} press releases found`
+        }
+      />
+      <AppPagination
+        page={page}
+        totalPages={totalPages}
+        totalCount={filteredPrs.length}
+        pageSize={rowsPerPage}
+        onPageChange={setPage}
+      />
+      <ConfirmDialog
+        open={confirm.open}
+        title={confirm.type === "approve" ? "Approve this press release?" : "Reject this press release?"}
+        description={
+          confirm.type === "approve"
+            ? "The client's wallet will be charged for the selected plan."
+            : "No wallet deduction will occur."
+        }
+        confirmLabel={confirm.type === "approve" ? "Approve" : "Reject"}
+        destructive={confirm.type === "reject"}
+        onClose={() => setConfirm({ open: false, type: null, id: null })}
+        onConfirm={runAction}
+      />
+    </Box>
   );
 };
 

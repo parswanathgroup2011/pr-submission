@@ -31,12 +31,13 @@ export default function MuiRichText({ value, onChange }) {
         }
         editable
         sx={{
-          minHeight: 300,        // ⬅️ Increase this
-          border: '1px solid #ccc',
+          minHeight: 300,
+          border: "1px solid",
+          borderColor: "divider",
           padding: 2,
-          borderRadius: 2,
-          backgroundColor: 'white',
-          overflowY: 'auto'
+          borderRadius: 1,
+          backgroundColor: "background.paper",
+          overflowY: "auto",
         }}
       />
     </RichTextEditorProvider>
