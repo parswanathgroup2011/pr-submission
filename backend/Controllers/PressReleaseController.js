@@ -2,32 +2,64 @@ const PressRelease = require("../Models/pressRelease");
 const Plan = require("../Models/plan");
 const PRCategory = require("../Models/prCategory");
 const Counter = require("../Models/counterModel");
-const Wallet = require('../Models/Wallet');
-const WalletTransaction = require('../Models/WalletTransactionSchema');
 const { debitWallet } = require('../Service/walletService')
 
+function htmlToText(html) {
+  return String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
+function sanitizeHtml(html) {
+  return String(html || "")
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?>[\s\S]*?<\/iframe>/gi, "")
+    .replace(/\son\w+="[^"]*"/gi, "")
+    .replace(/\son\w+='[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
+}
+
+function normalizeTags(body) {
+  const raw = body.tags ?? body["tags[]"];
+  if (raw == null || raw === "") return [];
+  const list = Array.isArray(raw) ? raw : [raw];
+  return list.map((tag) => String(tag).trim()).filter(Boolean);
+}
+
+function isOwnerOrAdmin(req, pressRelease) {
+  const ownerId = pressRelease.userId?._id || pressRelease.userId;
+  return (
+    req.user?.role === "admin" ||
+    String(ownerId) === String(req.user._id)
+  );
+}
 
 // 🟢 Create Press Release
 const createPressRelease = async (req, res) => {
   try {
     const {
-      
       title,
       summary,
       content,
       quoteDescription,
       city,
       subMember,
-      tags,
       scheduledAt,
       selectedPlan,
       selectedCategory,
     } = req.body;
     const userId = req.user._id;
+    const tags = normalizeTags(req.body);
+    const cleanContent = sanitizeHtml(content);
 
-    if (!title || !content || !selectedPlan) {
-      return res.status(400).json({ error: "Title, Content, and Plan are required" });
+    if (!title || !htmlToText(cleanContent) || !selectedPlan || !city || !selectedCategory) {
+      return res.status(400).json({ error: "Title, content, city, category, and plan are required" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Image is required" });
     }
 
     const plan = await Plan.findById(selectedPlan);
@@ -55,7 +87,7 @@ const createPressRelease = async (req, res) => {
       userId,
       title,
       summary,
-      content,
+      content: cleanContent,
       image: imagePath,
       quoteDescription,
       city,
@@ -100,6 +132,9 @@ const getPressReleaseById = async (req, res) => {
       .populate("selectedCategory", "name");
 
     if (!pressRelease) return res.status(404).json({ error: "Press release not found" });
+    if (!isOwnerOrAdmin(req, pressRelease)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
 
     res.status(200).json(pressRelease);
   } catch (error) {
@@ -117,6 +152,9 @@ const getPressReleaseByPrId = async (req, res) => {
       .populate("selectedCategory", "name");
 
     if (!pressRelease) return res.status(404).json({ error: "Press release not found" });
+    if (!isOwnerOrAdmin(req, pressRelease)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
 
     res.status(200).json(pressRelease);
   } catch (error) {
@@ -128,9 +166,6 @@ const getPressReleaseByPrId = async (req, res) => {
 // 🟡 Update Press Release
 const updatePressRelease = async (req, res) => {
   try {
-
-    console.log("📝 Body fields:", req.body);
-    console.log("📸 File:", req.file); 
     const {
       title,
       summary,
@@ -138,21 +173,29 @@ const updatePressRelease = async (req, res) => {
       quoteDescription,
       city,
       subMember,
-      tags,
       scheduledAt,
       selectedPlan,
       selectedCategory,
-      status,
     } = req.body;
+    const tags = Object.prototype.hasOwnProperty.call(req.body, "tags") ||
+      Object.prototype.hasOwnProperty.call(req.body, "tags[]")
+      ? normalizeTags(req.body)
+      : null;
 
     const pressRelease = await PressRelease.findById(req.params.id);
     if (!pressRelease) return res.status(404).json({ error: "Press release not found" });
+    if (!isOwnerOrAdmin(req, pressRelease)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
 
     if (['published', 'rejected'].includes(pressRelease.status)) {
       return res.status(403).json({ error: "You can only edit press release in Draft or Pending Status" });
     }
 
-    // Validate plan and category
+    if (content && !htmlToText(sanitizeHtml(content))) {
+      return res.status(400).json({ error: "Content is required" });
+    }
+
     if (selectedPlan) {
       const plan = await Plan.findById(selectedPlan);
       if (!plan) return res.status(404).json({ error: "Selected Plan doesn't exist" });
@@ -163,24 +206,21 @@ const updatePressRelease = async (req, res) => {
       if (!category) return res.status(404).json({ error: "Selected Category doesn't exist" });
     }
 
-    // ✅ Update fields
     pressRelease.title = title || pressRelease.title;
     pressRelease.summary = summary || pressRelease.summary;
-    pressRelease.content = content || pressRelease.content;
+    if (content) pressRelease.content = sanitizeHtml(content);
 
-    // ✅ Handle new image from Multer
     if (req.file) {
-      pressRelease.image = req.file.path;   // e.g. "uploads/filename.png"
+      pressRelease.image = req.file.path;
     }
 
     pressRelease.quoteDescription = quoteDescription || pressRelease.quoteDescription;
     pressRelease.city = city || pressRelease.city;
     pressRelease.subMember = subMember || pressRelease.subMember;
-    pressRelease.tags = tags || pressRelease.tags;
+    if (tags) pressRelease.tags = tags;
     pressRelease.scheduledAt = scheduledAt || pressRelease.scheduledAt;
     pressRelease.selectedPlan = selectedPlan || pressRelease.selectedPlan;
     pressRelease.selectedCategory = selectedCategory || pressRelease.selectedCategory;
-    pressRelease.status = status || pressRelease.status;
 
     await pressRelease.save();
     res.status(200).json({ message: "Press Release Updated Successfully", pressRelease });
@@ -201,6 +241,9 @@ const deletePressRelease = async (req, res) => {
 
     if (!pressRelease) {
       return res.status(404).json({ error: "Press Release not found" });
+    }
+    if (!isOwnerOrAdmin(req, pressRelease)) {
+      return res.status(403).json({ error: "Access denied" });
     }
 
     // 🚫 Prevent deleting if status is published or rejected

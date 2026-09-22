@@ -10,21 +10,17 @@ const storage = multer.diskStorage({
   }
 });
 
+const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
+
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-  
-  console.log("Uploaded file type:", file.mimetype); // Debugging log
-  
   if (!file.mimetype) {
-    console.log("Error: No mimetype detected");
     return cb(new Error("Invalid file type"), false);
   }
-  
-  if (allowedTypes.includes(file.mimetype.toLowerCase())) { // Convert mimetype to lowercase for safety
+
+  if (allowedTypes.includes(file.mimetype.toLowerCase())) {
     cb(null, true);
   } else {
-    console.log("Rejected file type:", file.mimetype);
-    cb(new Error("Only images (jpeg, png, jpg) are allowed"), false);
+    cb(new Error("Only images (jpeg, png, gif, webp) are allowed"), false);
   }
 };
 

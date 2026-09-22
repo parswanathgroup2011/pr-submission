@@ -1,20 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const{createPlan,getAllPlans,getPlanById,updatePlan,deletePlan} = require('../Controllers/PlanController');
+const { createPlan, getAllPlans, getPlanById, updatePlan, deletePlan } = require('../Controllers/PlanController');
+const ensureAuthenticated = require('../Middleware/Auth');
+const isAdmin = require('../Middleware/isAdmin');
 
-
-//CREATE
-
-router.post('/',createPlan);
-
-//READ
-router.get('/',getAllPlans);
-router.get('/:id',getPlanById)
-
-//UPDATE
-router.put('/:id',updatePlan);
-
-//DELETE
-router.delete('/:id',deletePlan)
+router.post('/', ensureAuthenticated, isAdmin, createPlan);
+router.get('/', ensureAuthenticated, getAllPlans);
+router.get('/:id', ensureAuthenticated, getPlanById);
+router.put('/:id', ensureAuthenticated, isAdmin, updatePlan);
+router.delete('/:id', ensureAuthenticated, isAdmin, deletePlan);
 
 module.exports = router;

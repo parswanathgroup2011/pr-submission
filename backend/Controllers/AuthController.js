@@ -225,7 +225,12 @@ const forgotPassword = async(req,res) =>{
   user.resetOtpExpire=Date.now() +10*60*1000;
   await user.save();
 
-  //send Email:
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return res.status(500).json({
+      message: "Email is not configured on the server",
+      success: false,
+    });
+  }
 
   const transporter = nodemailer.createTransport({
     service:"gmail",
@@ -236,7 +241,7 @@ const forgotPassword = async(req,res) =>{
   });
 
   const mailOptions ={
-    from:"yvyas9646@gmail.com",
+    from: process.env.EMAIL_USER,
     to:user.email,
     subject:"OTP for password Reset",
     html:`<h3>Your OTP is:${otp}</h3><p>This OTP is valid for 10 minutes</p>`
@@ -248,7 +253,7 @@ const forgotPassword = async(req,res) =>{
 
   }catch(error){
     console.log(error)
-    return res.status(500).json({message:"something went wrong",success:false})
+    return res.status(500).json({message:"Could not send OTP email. Please try again.",success:false})
   }
 }
 

@@ -21,7 +21,7 @@ router.get('/history', ensureAuthenticated,getPRHistory);
 
 
 // READ
-router.get('/',ensureAuthenticated,getAllPressReleases);       // Get all
+router.get('/', ensureAuthenticated, isAdmin, getAllPressReleases);       // Get all
 router.get("/prid/:id",ensureAuthenticated,getPressReleaseByPrId);  //Get Prrelease by pr id   
 router.get('/:id',ensureAuthenticated,getPressReleaseById);    // Get one by ID
 

@@ -24,8 +24,9 @@ const PressReleaseSchema = new Schema({
     type: String,
     enum: ['pending', 'published', 'rejected'],
     default: 'pending'
-  }
-,  
+  },
+  isWalletDeducted: { type: Boolean, default: false },
+  adminDecisionAt: { type: Date }, 
 
   // Step 3: Plan Selection
   selectedPlan: { type: mongoose.Schema.Types.ObjectId, ref: 'plans', required: true },
