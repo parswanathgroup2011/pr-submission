@@ -8,6 +8,7 @@ import {
   ListItemText,
   Box,
   Divider,
+  Typography,
   useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -17,22 +18,27 @@ import SidebarBrand from "./SidebarBrand";
 
 const DRAWER_WIDTH = 252;
 
-export default function AppDrawer({ items, variant = "admin", mobileOpen, onMobileClose, collapsed = false }) {
+function isSelected(pathname, path) {
+  if (!path) return false;
+  return pathname === path || (path !== "/home" && pathname.startsWith(path));
+}
+
+export default function ClientDrawer({ items, mobileOpen, onMobileClose, collapsed = false }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const location = useLocation();
   const navItems = items.filter((item) => item.action !== "logout");
   const logoutItem = items.find((item) => item.action === "logout");
-  const panelLabel = variant === "admin" ? "Admin panel" : "User panel";
-  const homePath = variant === "admin" ? "/admin" : "/home";
+  const overviewItems = navItems.filter((item) => item.section !== "account");
+  const accountItems = navItems.filter((item) => item.section === "account");
 
   const handleClick = (item) => {
     if (item.action === "logout") {
       localStorage.removeItem("authToken");
       localStorage.removeItem("loggedInUser");
       localStorage.removeItem("userRole");
-      handleSuccess(variant === "admin" ? "Admin logged out" : "User logged out");
+      handleSuccess("User logged out");
       navigate("/login");
     } else {
       navigate(item.path);
@@ -91,6 +97,24 @@ export default function AppDrawer({ items, variant = "admin", mobileOpen, onMobi
     );
   };
 
+  const sectionLabel = (label) => (
+    <Typography
+      variant="overline"
+      sx={{
+        display: "block",
+        px: 1.25,
+        pt: 1,
+        pb: 0.5,
+        color: "text.secondary",
+        letterSpacing: "0.08em",
+        fontSize: 11,
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </Typography>
+  );
+
   const content = (
     <Box
       sx={{
@@ -101,24 +125,29 @@ export default function AppDrawer({ items, variant = "admin", mobileOpen, onMobi
       }}
     >
       <SidebarBrand
-        panelLabel={panelLabel}
+        panelLabel="User panel"
         onClick={() => {
-          navigate(homePath);
+          navigate("/home");
           if (isMobile) onMobileClose?.();
         }}
       />
       <Box sx={{ overflowX: "hidden", overflowY: "auto", flex: 1, px: 1.25, pt: 2, pb: 1 }}>
+        {sectionLabel("Overview")}
         <List disablePadding sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-          {navItems.map((item) => {
-            const selected =
-              item.path &&
-              (location.pathname === item.path ||
-                (item.path !== "/admin" &&
-                  item.path !== "/home" &&
-                  location.pathname.startsWith(item.path)));
-            return renderItem(item, { selected });
-          })}
+          {overviewItems.map((item) =>
+            renderItem(item, { selected: isSelected(location.pathname, item.path) })
+          )}
         </List>
+        {accountItems.length > 0 && (
+          <>
+            {sectionLabel("Account")}
+            <List disablePadding sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+              {accountItems.map((item) =>
+                renderItem(item, { selected: isSelected(location.pathname, item.path) })
+              )}
+            </List>
+          </>
+        )}
       </Box>
       {logoutItem && (
         <Box sx={{ px: 1.25, pt: 1, pb: 1.25, flexShrink: 0 }}>
@@ -148,9 +177,7 @@ export default function AppDrawer({ items, variant = "admin", mobileOpen, onMobi
         open={mobileOpen}
         onClose={onMobileClose}
         ModalProps={{ keepMounted: true }}
-        sx={{
-          "& .MuiDrawer-paper": paperSx,
-        }}
+        sx={{ "& .MuiDrawer-paper": paperSx }}
       >
         {content}
       </Drawer>
@@ -174,5 +201,3 @@ export default function AppDrawer({ items, variant = "admin", mobileOpen, onMobi
     </Drawer>
   );
 }
-
-export { DRAWER_WIDTH as EXPANDED_WIDTH, DRAWER_WIDTH as COLLAPSED_WIDTH };

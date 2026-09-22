@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   Box, Stack, Typography, Paper, Button,
-  TextField, Autocomplete, Table, TableBody, TableRow, TableCell
+  TextField, Autocomplete, Table, TableBody, TableRow, TableCell, Alert
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -9,6 +9,13 @@ import * as yup from 'yup';
 
 import { getAllPlans } from '../../services/planService';
 import { getAllCategories } from '../../services/categoryService';
+import { getWalletBalance } from '../../services/walletApi';
+
+function displayFlag(value) {
+  if (value === true || value === "true" || value === "Yes") return "Yes";
+  if (!value || value === "false" || value === "No") return "No";
+  return String(value);
+}
 
 
 /* ─── Validation ────────────────────────────────────────── */
@@ -30,6 +37,7 @@ export default function Step3PlanSelection({
   const [categories, setCategories] = useState([]);
   const [loadingPlans, setLoadingPlans]         = useState(true);
   const [loadingCats,  setLoadingCats]          = useState(true);
+  const [walletBalance, setWalletBalance] = useState(null);
 
 
   const {
@@ -57,6 +65,10 @@ export default function Step3PlanSelection({
     () => plans.find(p => p._id === selectedPlanId),
     [plans, selectedPlanId]
   );
+  const insufficientCredits =
+    selectedPlanObj &&
+    walletBalance != null &&
+    Number(selectedPlanObj.credits) > Number(walletBalance);
 
   /* ── fetch all plans once ─────────────────────────── */
   useEffect(() => {
@@ -79,6 +91,14 @@ export default function Step3PlanSelection({
         console.error(err);
       } finally {
         setLoadingCats(false);
+      }
+    })();
+    (async () => {
+      try {
+        const wallet = await getWalletBalance();
+        setWalletBalance(wallet?.balance ?? wallet?.walletBalance ?? null);
+      } catch {
+        setWalletBalance(null);
       }
     })();
   }, []);
@@ -160,6 +180,12 @@ export default function Step3PlanSelection({
     );
   }}
 />
+          {insufficientCredits && (
+            <Alert severity="warning">
+              This plan costs {selectedPlanObj.credits.toLocaleString()} credits. Your wallet has {Number(walletBalance).toLocaleString()} credits. You can still submit; the wallet is charged when an admin approves the PR.
+            </Alert>
+          )}
+
           {/* ── Plan summary ─────────────────────────── */}
           {selectedPlanObj && (
   <Box
@@ -211,11 +237,11 @@ export default function Step3PlanSelection({
         </TableRow>
         <TableRow>
           <TableCell>Disclaimer</TableCell>
-          <TableCell>{selectedPlanObj.disclaimer ? 'Yes' : 'No'}</TableCell>
+          <TableCell>{displayFlag(selectedPlanObj.disclaimer)}</TableCell>
         </TableRow>
         <TableRow>
           <TableCell>Backlink</TableCell>
-          <TableCell>{selectedPlanObj.backlink ? 'Yes' : 'No'}</TableCell>
+          <TableCell>{displayFlag(selectedPlanObj.backlink)}</TableCell>
         </TableRow>
         <TableRow>
           <TableCell></TableCell>
@@ -231,7 +257,7 @@ export default function Step3PlanSelection({
           {/* ── Navigation buttons (omit if using outer bar) ── */}
           {!hideActions && (
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Button variant="outlined" onClick={onBack} disabled={isSubmitting} sx={{backgroundColor:'royalblue',color:'white',border:'none'}}>
+              <Button variant="outlined" onClick={onBack} disabled={isSubmitting}>
                 Back
               </Button>
               <Button

@@ -1,20 +1,22 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
 import { ToastContainer } from "react-toastify";
 import App from "./App";
-import theme from "./theme";
+import ThemeModeProvider, { useColorMode } from "./components/layout/ThemeModeProvider";
 import "./index.css";
 import "react-toastify/dist/ReactToastify.css";
 
+function ThemedToastContainer() {
+  const { mode } = useColorMode();
+  return <ToastContainer position="top-right" newestOnTop closeOnClick theme={mode} />;
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <ThemeProvider theme={theme}>
-    <CssBaseline />
+  <ThemeModeProvider>
     <BrowserRouter>
       <App />
     </BrowserRouter>
-    <ToastContainer position="top-right" newestOnTop closeOnClick />
-  </ThemeProvider>
+    <ThemedToastContainer />
+  </ThemeModeProvider>
 );

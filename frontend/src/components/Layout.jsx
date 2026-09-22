@@ -1,18 +1,20 @@
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import ReceiptIcon from "@mui/icons-material/Receipt";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import PostAddIcon from "@mui/icons-material/PostAdd";
-import AccountBoxIcon from "@mui/icons-material/AccountBox";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
+import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
+import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import AppShell from "./layout/AppShell";
 
 const clientNav = [
-  { text: "Home", icon: <DashboardIcon />, path: "/home" },
-  { text: "Press Releases", icon: <PostAddIcon />, path: "/press-release" },
-  { text: "Plans", icon: <AccountBalanceWalletIcon />, path: "/plans" },
-  { text: "Transactions", icon: <ReceiptIcon />, path: "/transactions" },
-  { text: "Notifications", icon: <NotificationsIcon />, path: "/notifications" },
-  { text: "My Profile", icon: <AccountBoxIcon />, path: "/profile" },
+  { text: "Home", icon: <DashboardOutlinedIcon />, path: "/home" },
+  { text: "Press Releases", icon: <DescriptionOutlinedIcon />, path: "/press-release" },
+  { text: "Plans", icon: <AccountBalanceWalletOutlinedIcon />, path: "/plans" },
+  { text: "Transactions", icon: <ReceiptOutlinedIcon />, path: "/transactions" },
+  { text: "Notifications", icon: <NotificationsOutlinedIcon />, path: "/notifications", section: "account" },
+  { text: "My Profile", icon: <AccountCircleOutlinedIcon />, path: "/profile", section: "account" },
+  { text: "Logout", icon: <LogoutOutlinedIcon />, action: "logout" },
 ];
 
 export default function Layout() {

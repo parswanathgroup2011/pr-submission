@@ -1,8 +1,7 @@
 // src/components/pr_submission/Step1PressInfo.jsx
-import React from 'react';
-import  { useEffect } from 'react'; // ← Add this
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Grid, Box, Button, Typography,
+  Box, Button, Typography,
   TextField, InputLabel, MenuItem, FormControl,
   Select, Divider, Paper, Stack
 } from '@mui/material';
@@ -12,29 +11,113 @@ import * as yup from 'yup';
 import { CloudUpload } from '@mui/icons-material';
 import MuiRichText from '../common/MuiRichText';
 
-/* ─── Validation schema ─────────────────────────────────────────── */
-const schema = yup.object({
-  title:               yup.string().required('Title is required'),
-  summary:             yup.string().max(300, 'Summary too long'),
-  content:             yup.string().required('Content is required'),
- 
-  city:                yup.string().required('Select a city'),
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+
+function htmlHasText(html) {
+  return String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim().length > 0;
+}
+
+function getImageUrl(filePath) {
+  if (!filePath) return "";
+  const baseUrl = String(import.meta.env.VITE_API_URL || "").replace(/\/api\/?$/, "");
+  const cleaned = String(filePath).replace(/\\/g, "/").replace(/^\.?\//, "");
+  if (/^https?:\/\//i.test(cleaned)) return cleaned;
+  return `${baseUrl}/${cleaned}`;
+}
+
+const buildSchema = (existingImage) => yup.object({
+  title: yup.string().required('Title is required'),
+  summary: yup.string().max(300, 'Summary too long'),
+  content: yup
+    .string()
+    .required('Content is required')
+    .test('not-empty-html', 'Content is required', (value) => htmlHasText(value)),
+  city: yup.string().required('Select a city'),
   imageFile: yup
     .mixed()
-    .test('fileChosen', 'Image is required', v => !!v?.name)
-    .test(
-      'fileType',
-      'Unsupported type',
-      v => !v || ['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(v.type)
-    ),
+    .test('fileChosen', 'Image is required', (value) => Boolean(value?.name) || Boolean(existingImage))
+    .test('fileType', 'Unsupported type', (value) => !value || ALLOWED_IMAGE_TYPES.includes(value.type))
+    .test('fileSize', 'Image must be under 20MB', (value) => !value || value.size <= MAX_IMAGE_BYTES),
   quoteDescription: yup.string().max(150),
 }).required();
 
-/* ─── Select options (replace later with API data) ──────────────── */
-const subMemberOptions = [
-  { value: 'userA_id', label: 'Nikhil Jain (8200183354)' },
-  { value: 'userB_id', label: 'Another Member' },
-];
+function ImageUploadField({ value, onChange, existingImage, error }) {
+  const [preview, setPreview] = useState(() => getImageUrl(existingImage));
+
+  useEffect(() => {
+    if (!value) {
+      setPreview(getImageUrl(existingImage));
+      return undefined;
+    }
+    const url = URL.createObjectURL(value);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [value, existingImage]);
+
+  return (
+    <Box>
+      <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
+        Upload Image {existingImage ? "(optional if replacing)" : "*"}
+      </Typography>
+      {preview ? (
+        <Box
+          component="img"
+          src={preview}
+          alt="Press release"
+          sx={{
+            width: "100%",
+            maxHeight: 180,
+            objectFit: "cover",
+            borderRadius: 1,
+            mb: 1.5,
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        />
+      ) : null}
+      <Button
+        variant="outlined"
+        component="label"
+        fullWidth
+        startIcon={<CloudUpload />}
+        sx={{
+          height: 56,
+          borderStyle: "dashed",
+          borderWidth: 2,
+          backgroundColor: value ? "action.hover" : "transparent",
+          color: value ? "primary.main" : "text.secondary",
+          borderColor: error ? "error.main" : value ? "primary.main" : "divider",
+          "&:hover": {
+            borderColor: "primary.main",
+            backgroundColor: "action.hover",
+          },
+        }}
+      >
+        {value?.name || (existingImage ? "Replace image" : "Choose Image File")}
+        <input
+          type="file"
+          hidden
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          onChange={(e) => onChange(e.target.files[0])}
+        />
+      </Button>
+      {error && (
+        <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+          {error}
+        </Typography>
+      )}
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+        Supported formats: JPEG, PNG, GIF, WebP. Max 20MB.
+      </Typography>
+    </Box>
+  );
+}
+
 const cityOptions = [
   "Agartala",
   "Agra",
@@ -181,7 +264,8 @@ const cityOptions = [
 
 
 /* ─── Component ─────────────────────────────────────────────────── */
-export default function Step1PressInfo({ defaultValues, onNext }) {
+export default function Step1PressInfo({ defaultValues, onNext, existingImage = "" }) {
+  const schema = useMemo(() => buildSchema(existingImage), [existingImage]);
   const {
     handleSubmit,
     control,
@@ -285,6 +369,7 @@ export default function Step1PressInfo({ defaultValues, onNext }) {
                   <Box sx={{ border: errors.content ? '1px solid' : 'none', 
                            borderColor: 'error.main', borderRadius: 1 }}>
                     <MuiRichText
+                      key={existingImage || "new-pr"}
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -301,39 +386,6 @@ export default function Step1PressInfo({ defaultValues, onNext }) {
 
 
           <Divider sx={{ my: 1 }} />
-
-          {/* ── Sub Member Field ─────────────────────────── */}
-          {/* <Box>
-            <Controller
-              name="subMember"
-              control={control}
-              render={({ field }) => (
-                <FormControl fullWidth error={!!errors.subMember}>
-                  <InputLabel>Sub Member *</InputLabel>
-                  <Select 
-                    {...field} 
-                    label="Sub Member *"
-                    sx={{
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'primary.main',
-                      },
-                    }}
-                  >
-                    {subMemberOptions.map(opt => (
-                      <MenuItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {errors.subMember && (
-                    <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                      {errors.subMember.message}
-                    </Typography>
-                  )}
-                </FormControl>
-              )}
-            />
-          </Box> */}
 
           {/* ── City Field ────────────────────────────────── */}
           <Box>
@@ -374,48 +426,12 @@ export default function Step1PressInfo({ defaultValues, onNext }) {
               name="imageFile"
               control={control}
               render={({ field }) => (
-                <Box>
-                  <Typography
-                    variant="body1"
-                    sx={{ mb: 1, fontWeight: 500 }}
-                  >
-                    Upload Image *
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    fullWidth
-                    startIcon={<CloudUpload />}
-                    sx={{ 
-                      height: 56,
-                      borderStyle: 'dashed',
-                      borderWidth: 2,
-                      backgroundColor: field.value ? 'action.hover' : 'transparent',
-                      color: field.value ? 'primary.main' : 'text.secondary',
-                      borderColor: errors.imageFile ? 'error.main' : field.value ? 'primary.main' : 'divider',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        backgroundColor: 'action.hover',
-                      },
-                    }}
-                  >
-                    {field.value?.name || 'Choose Image File'}
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      onChange={e => field.onChange(e.target.files[0])}
-                    />
-                  </Button>
-                  {errors.imageFile && (
-                    <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
-                      {errors.imageFile.message}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                    Supported formats: JPEG, PNG, GIF, WebP
-                  </Typography>
-                </Box>
+                <ImageUploadField
+                  value={field.value}
+                  onChange={field.onChange}
+                  existingImage={existingImage}
+                  error={errors.imageFile?.message}
+                />
               )}
             />
           </Box>

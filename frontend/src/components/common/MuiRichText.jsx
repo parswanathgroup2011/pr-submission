@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -14,9 +14,17 @@ import {
 export default function MuiRichText({ value, onChange }) {
   const editor = useEditor({
     extensions: [StarterKit],
-    content: value,
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    content: value || "",
+    onUpdate: ({ editor: current }) => onChange(current.getHTML()),
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    const next = value || "";
+    if (editor.getHTML() !== next) {
+      editor.commands.setContent(next, false);
+    }
+  }, [editor, value]);
 
   return (
     <RichTextEditorProvider editor={editor}>

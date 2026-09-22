@@ -5,6 +5,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import UploadIcon from "@mui/icons-material/Upload";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import LogoutIcon from "@mui/icons-material/Logout";
 import AppShell from "./layout/AppShell";
 
 const adminNav = [
@@ -15,6 +16,7 @@ const adminNav = [
   { text: "Wallets", icon: <AccountBalanceWalletIcon />, path: "/admin/wallets" },
   { text: "Payment Requests", icon: <UploadIcon />, path: "/admin/manual-topups" },
   { text: "Notifications", icon: <NotificationsIcon />, path: "/admin/notifications" },
+  { text: "Logout", icon: <LogoutIcon />, action: "logout" },
 ];
 
 export default function AdminLayout() {

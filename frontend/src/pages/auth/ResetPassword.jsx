@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Box, Button, Stack } from "@mui/material";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AuthLayout from "../../components/ui/AuthLayout";
 import FormField from "../../components/ui/FormField";
 import { resetPassword } from "../../services/auth";
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState(location.state?.email || "");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -20,6 +22,9 @@ const ResetPassword = () => {
     try {
       const res = await resetPassword(email, otp, newPassword);
       setMessage(res.message);
+      if (res.success) {
+        setTimeout(() => navigate("/login"), 1200);
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Something went wrong");
     }

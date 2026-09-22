@@ -1,4 +1,3 @@
-// src/components/pr_submission/PRSubmissionModal.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, IconButton,
@@ -10,8 +9,8 @@ import Step1PressInfo from './Step1PressInfo';
 import Step2TagsScheduler from './Step2TagsScheduler';
 import Step3PlanSelection from './Step3PlanSelection';
 
-import { createPressRelease,updatePressRelease } from '../../services/pressReleaseService';
-import { handleSuccess,handleError } from '../../utils';
+import { createPressRelease, updatePressRelease } from '../../services/pressReleaseService';
+import { handleSuccess, handleError } from '../../utils';
 
 const steps = ['Press Information', 'Tags & Scheduler', 'Plan'];
 
@@ -25,7 +24,6 @@ const initialData = {
   quoteDescription: '',
   tags: [],
   scheduledAt: null,
-  selectedLanguageForFilter: 'English',
   selectedPlan: '',
   selectedCategory: '',
 };
@@ -34,30 +32,29 @@ export default function PRSubmissionModal({
   isOpen,
   onClose,
   onPRSubmittedSuccessfully,
-  editPressRelease=null
+  editPressRelease = null
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
     if (isOpen) {
       setActiveStep(0);
       setError(null);
-  
+
       if (editPressRelease) {
         setFormData({
           title: editPressRelease.title || '',
           summary: editPressRelease.summary || '',
           content: editPressRelease.content || '',
           subMember: editPressRelease.subMember || '',
-          imageFile: null, // Optional: for new uploads
+          imageFile: null,
           city: editPressRelease.city || '',
           quoteDescription: editPressRelease.quoteDescription || '',
           tags: editPressRelease.tags || [],
           scheduledAt: editPressRelease.scheduledAt || null,
-          selectedLanguageForFilter: 'English',
           selectedPlan: editPressRelease.selectedPlan?._id || '',
           selectedCategory: editPressRelease.selectedCategory?._id || '',
         });
@@ -66,56 +63,54 @@ export default function PRSubmissionModal({
       }
     }
   }, [isOpen, editPressRelease]);
-  
 
-  const next = () => setActiveStep(s => s + 1);
-  const back = () => setActiveStep(s => s - 1);
+  const next = () => setActiveStep((s) => s + 1);
+  const back = () => setActiveStep((s) => s - 1);
 
-  const updateAndNext = data => {
-    setFormData(prev => ({ ...prev, ...data }));
+  const updateAndNext = (data) => {
+    setFormData((prev) => ({ ...prev, ...data }));
     next();
   };
 
-  const handleStep3Submit = step3Data => {
-    console.log("🚀 Step 3 Submit Called", step3Data);
+  const handleStep3Submit = (step3Data) => {
     const finalData = { ...formData, ...step3Data };
     setFormData(finalData);
     handleSubmitPR(finalData);
   };
+
   const handleSubmitPR = async (finalData) => {
-    console.log("📦 Submitting finalData:", finalData);
     setIsSubmitting(true);
     setError(null);
-  
+
     try {
       const payload = new FormData();
-  
+      const skipKeys = new Set(['imageFile', 'subMember']);
+
       Object.entries(finalData).forEach(([key, val]) => {
-        if (key === 'imageFile') {
-          if (val) payload.append('image', val);
-        } else if (Array.isArray(val)) {
-          val.forEach(item => payload.append(`${key}[]`, item));
-        } else if (val !== null && val !== '') {
+        if (skipKeys.has(key)) return;
+        if (key === 'tags') {
+          (Array.isArray(val) ? val : []).forEach((item) => payload.append('tags', item));
+          return;
+        }
+        if (val !== null && val !== '') {
           payload.append(key, val);
         }
       });
-  
-      for (let [key, value] of payload.entries()) {
-        console.log(`🧾 ${key}:`, value);
+
+      if (finalData.imageFile) {
+        payload.append('image', finalData.imageFile);
       }
-  
-      //  Check if editing or creating
+
       if (editPressRelease) {
         await updatePressRelease(editPressRelease._id, payload);
-        handleSuccess("Press-release updated! 🎉");
+        handleSuccess("Press release updated");
       } else {
         await createPressRelease(payload);
-        handleSuccess("Press-release created! 🎉");
+        handleSuccess("Press release created");
       }
-  
-      onPRSubmittedSuccessfully(); // close modal + refresh list
+
+      onPRSubmittedSuccessfully();
     } catch (err) {
-      console.error(err);
       const message = err.response?.data?.error || err.message || 'Submission failed';
       setError(message);
       handleError(message);
@@ -123,16 +118,28 @@ export default function PRSubmissionModal({
       setIsSubmitting(false);
     }
   };
-  
 
   const getStepContent = () => {
     switch (activeStep) {
       case 0:
-        return <Step1PressInfo defaultValues={formData} onNext={updateAndNext} />;
+        return (
+          <Step1PressInfo
+            defaultValues={formData}
+            onNext={updateAndNext}
+            existingImage={editPressRelease?.image || ""}
+          />
+        );
       case 1:
         return <Step2TagsScheduler defaultValues={formData} onBack={back} onNext={updateAndNext} />;
       case 2:
-        return <Step3PlanSelection defaultValues={formData} onBack={back} onSubmit={handleStep3Submit} isSubmitting={isSubmitting} />;
+        return (
+          <Step3PlanSelection
+            defaultValues={formData}
+            onBack={back}
+            onSubmit={handleStep3Submit}
+            isSubmitting={isSubmitting}
+          />
+        );
       default:
         return null;
     }
@@ -141,7 +148,11 @@ export default function PRSubmissionModal({
   return (
     <Dialog
       open={isOpen}
-      onClose={onClose}
+      onClose={(_, reason) => {
+        if (isSubmitting) return;
+        if (reason === "backdropClick") return;
+        onClose();
+      }}
       fullWidth
       maxWidth="md"
       scroll="paper"
@@ -155,7 +166,7 @@ export default function PRSubmissionModal({
 
       <DialogContent dividers>
         <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
-          {steps.map(label => (
+          {steps.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
@@ -176,10 +187,11 @@ export default function PRSubmissionModal({
           sx={{
             position: 'absolute',
             inset: 0,
-            bgcolor: 'rgba(255,255,255,0.5)',
+            bgcolor: 'action.disabledBackground',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
+            zIndex: 1,
           }}
         >
           <CircularProgress />
