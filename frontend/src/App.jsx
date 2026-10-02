@@ -23,42 +23,22 @@ import UserWallet from "./pages/admin/UserWallet";
 import AdminManualTopups from "./pages/admin/AdminManualTopups";
 import UserNotifications from "./pages/client/UserNotifications";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import { RedirectIfAuthenticated, RequireRole } from "./components/RoleGate";
 
+function PrivateRoute({ element }) {
+  return <RequireRole role="user">{element}</RequireRole>;
+}
+
+function AdminRoute({ element }) {
+  return <RequireRole role="admin">{element}</RequireRole>;
+}
+
+function PublicRoute({ element }) {
+  return <RedirectIfAuthenticated>{element}</RedirectIfAuthenticated>;
+}
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true); // Set true for testing
-
-  // 🔒 Client Protected Route
-  const PrivateRoute = ({ element }) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) return <Navigate to="/login" />;
-
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.role === "user" ? element : <Navigate to="/admin" />;
-  };
-
-  // 🔒 Admin Protected Route
-  const AdminRoute = ({ element }) => {
-    const token = localStorage.getItem("authToken");
-    if (!token) return <Navigate to="/login" />;
-
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.role === "admin" ? element : <Navigate to="/home" />;
-  };
-
-  // 🚫 Public Route (block logged-in users)
-  const PublicRoute = ({ element }) => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return payload.role === "admin" ? (
-        <Navigate to="/admin" />
-      ) : (
-        <Navigate to="/home" />
-      );
-    }
-    return element;
-  };
 
   return (
     <div className="App">

@@ -20,6 +20,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useNavigate } from "react-router-dom";
 import { handleError, handleSuccess } from "../utils";
+import { disconnectSocket } from "../socket";
 import { ToastContainer } from "react-toastify";
 
 const drawerWidth = 220;
@@ -103,6 +104,7 @@ const Sidebar = () => {
               key={index}
               onClick={() => {
                 if (item.action === 'logout') {
+                  disconnectSocket();
                   localStorage.removeItem('authToken');      // ✅ correct key
                   localStorage.removeItem('loggedInUser');   // optional
                   localStorage.removeItem('userRole');       // optional

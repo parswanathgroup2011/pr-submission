@@ -1,5 +1,6 @@
 // apiClient.js
-import axios from 'axios'; 
+import axios from 'axios';
+import { disconnectSocket } from '../socket'; 
 
 
 // Use env variable, fallback to /api (for production)
@@ -36,12 +37,29 @@ apiClient.interceptors.response.use(
       console.log('API Error - Status:', error.response.status);
       console.log('API Error - Data:', error.response.data);
 
-      if (error.response.status === 401 || error.response.status === 403) {
-        console.log('Authentication Error: Token might be invalid, expired, or missing');
+      // 401 means the session is gone. 403 is a permission denial from a valid
+      // session and must not sign the user out.
+      // A demoted admin still has a valid session, but admin pages must close.
+      const adminDenied =
+        error.response.status === 403 &&
+        error.response.data?.error === "Access denied. Admins only.";
+      if (
+        adminDenied &&
+        typeof window !== "undefined" &&
+        window.location.pathname.startsWith("/admin")
+      ) {
+        localStorage.setItem("userRole", "user");
+        window.location.assign("/home");
+      }
+
+      if (error.response.status === 401) {
+        disconnectSocket();
         localStorage.removeItem('authToken');
+        localStorage.removeItem('loggedInUser');
+        localStorage.removeItem('userRole');
 
         if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          console.warn('User should be redirected to login.');
+          window.location.assign('/login');
         }
       }
     } else if (error.request) {

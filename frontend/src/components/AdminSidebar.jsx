@@ -8,6 +8,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet"; // ✅ Wallet icon
 import { useNavigate } from "react-router-dom";
 import { handleSuccess } from "../utils";
+import { disconnectSocket } from "../socket";
 import UploadIcon from "@mui/icons-material/Upload"; 
 
 const drawerWidth = 220;
@@ -54,6 +55,7 @@ const menuItems = [
               <ListItemButton
                 onClick={() => {
                   if (item.action === 'logout') {
+                    disconnectSocket();
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('loggedInUser');
                     localStorage.removeItem('userRole');

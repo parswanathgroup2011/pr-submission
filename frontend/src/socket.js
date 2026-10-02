@@ -1,41 +1,90 @@
 import { io } from "socket.io-client";
 
-let socket = null;
-
-export const connectSocket = () => {
-  const token = localStorage.getItem("authToken");
-  if (!token) return null;
-
-  let payload = null;
+function closeClient(client) {
+  if (!client) return;
+  // Replace the handshake callback before closing so a late reconnect cannot
+  // send the token this client was opened with.
+  client.auth = (callback) => callback({});
   try {
-    payload = JSON.parse(atob(token.split(".")[1]));
-  } catch (err) {
-    console.error("Invalid token");
-    return null;
+    if (typeof client.io?.reconnection === "function") client.io.reconnection(false);
+  } catch {
+    // A test double or already-closed manager may not expose this control.
+  }
+  try {
+    client.disconnect();
+  } catch {
+    // Logout still has to drop the session if the client is already closed.
+  }
+}
+
+export function createSocketSession({ createClient, readToken }) {
+  let socket = null;
+  let activeToken = null;
+
+  function disconnectSocket() {
+    const current = socket;
+    activeToken = null;
+    socket = null;
+    closeClient(current);
   }
 
-  // If already connected, return same socket
-  if (socket) return socket;
+  function connectSocket() {
+    const token = readToken();
+    if (!token) {
+      disconnectSocket();
+      return null;
+    }
+    if (socket && activeToken === token) return socket;
 
-  // Create socket connection
-  socket = io(import.meta.env.VITE_API_URL.replace("/api", ""), {
-    transports: ["websocket"],
-    query: {
-      userId: payload._id,
-      role: payload.role,
-    },
-  });
+    disconnectSocket();
+    activeToken = token;
+    const sessionToken = token;
+    socket = createClient((callback) => {
+      const current = readToken();
+      if (!current || current !== sessionToken || current !== activeToken) {
+        callback({});
+        return;
+      }
+      callback({ token: current });
+    });
 
-  socket.on("connect", () => {
-    console.log("🔌 Socket Connected:", payload._id, payload.role);
-  });
+    socket.on("connect", () => {
+      console.log("🔌 Socket Connected");
+    });
+    socket.on("disconnect", () => {
+      console.log("❌ Socket Disconnected");
+    });
 
-  socket.on("disconnect", () => {
-    console.log("❌ Socket Disconnected");
-  });
+    return socket;
+  }
 
+  return { connectSocket, disconnectSocket };
+}
+
+let socket = null;
+
+const browserSession = createSocketSession({
+  readToken: () => {
+    if (typeof localStorage === "undefined") return null;
+    return localStorage.getItem("authToken");
+  },
+  createClient: (auth) => {
+    const baseUrl = import.meta.env?.VITE_API_URL || "";
+    return io(baseUrl.replace("/api", ""), {
+      transports: ["websocket"],
+      auth,
+    });
+  },
+});
+
+export const connectSocket = () => {
+  socket = browserSession.connectSocket();
   return socket;
 };
 
-// export socket instance
+export const disconnectSocket = () => {
+  browserSession.disconnectSocket();
+  socket = null;
+};
+
 export { socket };

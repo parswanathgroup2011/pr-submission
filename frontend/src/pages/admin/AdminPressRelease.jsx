@@ -18,6 +18,7 @@ import ActionIconButton from "../../components/ui/ActionIconButton";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import FilterBar from "../../components/ui/FilterBar";
 import StatusFilter from "../../components/ui/StatusFilter";
+import useAuthedFileUrl from "../../hooks/useAuthedFileUrl";
 import { handleError, handleSuccess } from "../../utils";
 
 const stripHtml = (html) =>
@@ -27,12 +28,10 @@ const stripHtml = (html) =>
     .trim()
     .slice(0, 80);
 
-const getImageUrl = (filePath) => {
-  if (!filePath) return "";
-  const cleanedPath = filePath.replace(/^uploads\//, "");
-  const baseUrl = import.meta.env.VITE_API_URL.replace("/api", "");
-  return `${baseUrl}/uploads/${cleanedPath}`;
-};
+function PressReleaseThumbnail({ filePath }) {
+  const src = useAuthedFileUrl(filePath);
+  return <Avatar variant="rounded" src={src || undefined} alt="PR" sx={{ width: 56, height: 40 }} />;
+}
 
 const AdminPressReleaseTable = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,7 +97,7 @@ const AdminPressReleaseTable = () => {
       label: "Image",
       render: (pr) =>
         pr.image ? (
-          <Avatar variant="rounded" src={getImageUrl(pr.image)} alt="PR" sx={{ width: 56, height: 40 }} />
+          <PressReleaseThumbnail filePath={pr.image} />
         ) : (
           "—"
         ),

@@ -19,7 +19,9 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import AccountCircleOutlinedIcon from "@mui/icons-material/AccountCircleOutlined";
 import logo from "../../assets/logo.webp";
 import { getMyProfile } from "../../services/authService";
+import useAuthedFileUrl from "../../hooks/useAuthedFileUrl";
 import { handleSuccess } from "../../utils";
+import { disconnectSocket } from "../../socket";
 import { useColorMode } from "./ThemeModeProvider";
 
 function getPageTitle(pathname, items = []) {
@@ -48,14 +50,6 @@ function getInitials(name) {
   if (!parts.length) return "U";
   if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
-
-function getImageUrl(filePath) {
-  if (!filePath) return "";
-  const baseUrl = String(import.meta.env.VITE_API_URL || "").replace(/\/api\/?$/, "");
-  const cleaned = String(filePath).replace(/\\/g, "/").replace(/^\.?\//, "");
-  if (/^https?:\/\//i.test(cleaned)) return cleaned;
-  return `${baseUrl}/${cleaned}`;
 }
 
 export default function AppNavbar({
@@ -99,6 +93,7 @@ export default function AppNavbar({
 
   const handleLogout = () => {
     setUserAnchor(null);
+    disconnectSocket();
     localStorage.removeItem("authToken");
     localStorage.removeItem("loggedInUser");
     localStorage.removeItem("userRole");
@@ -106,10 +101,11 @@ export default function AppNavbar({
     navigate("/login");
   };
 
+  const profileImageUrl = useAuthedFileUrl(user.profileImage);
   const title = getPageTitle(location.pathname, navItems);
   const roleLabel = user.role === "admin" ? "Admin" : user.role === "user" ? "User" : user.role;
   const initials = getInitials(user.name);
-  const avatarSrc = getImageUrl(user.profileImage);
+  const avatarSrc = profileImageUrl;
 
   return (
     <AppBar position={position} color="inherit" elevation={0} sx={{ overflowX: "hidden", top: 0, flexShrink: 0 }}>

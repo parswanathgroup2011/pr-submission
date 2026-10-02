@@ -12,6 +12,7 @@ import AppPagination from "../../components/ui/AppPagination";
 import ActionIconButton from "../../components/ui/ActionIconButton";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import AppDialog from "../../components/ui/AppDialog";
+import AuthedImage from "../../components/ui/AuthedImage";
 import { handleError, handleSuccess } from "../../utils";
 
 const AdminManualTopups = () => {
@@ -19,7 +20,7 @@ const AdminManualTopups = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [openImage, setOpenImage] = useState(false);
-  const [imageSrc, setImageSrc] = useState("");
+  const [imageFile, setImageFile] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const [confirm, setConfirm] = useState({ open: false, type: null, id: null });
@@ -39,12 +40,6 @@ const AdminManualTopups = () => {
   useEffect(() => {
     load();
   }, []);
-
-  const getScreenshotUrl = (filePath) => {
-    if (!filePath) return "";
-    const base = import.meta.env.VITE_API_URL.replace("/api", "");
-    return `${base}/uploads/${filePath}`;
-  };
 
   const filtered = requests.filter(
     (r) =>
@@ -84,7 +79,7 @@ const AdminManualTopups = () => {
         <ActionIconButton
           title="View"
           onClick={() => {
-            setImageSrc(getScreenshotUrl(row.screenshot));
+            setImageFile(row.screenshot);
             setOpenImage(true);
           }}
         >
@@ -159,9 +154,8 @@ const AdminManualTopups = () => {
       />
       <AppDialog open={openImage} onClose={() => setOpenImage(false)} title="Payment screenshot" maxWidth="md">
         <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <Box
-            component="img"
-            src={imageSrc}
+          <AuthedImage
+            filePath={imageFile}
             alt="Screenshot"
             sx={{ width: "100%", maxWidth: 600, borderRadius: 1 }}
           />

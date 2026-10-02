@@ -13,6 +13,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useLocation, useNavigate } from "react-router-dom";
 import { handleSuccess } from "../../utils";
+import { disconnectSocket } from "../../socket";
 import SidebarBrand from "./SidebarBrand";
 
 const DRAWER_WIDTH = 252;
@@ -29,6 +30,7 @@ export default function AppDrawer({ items, variant = "admin", mobileOpen, onMobi
 
   const handleClick = (item) => {
     if (item.action === "logout") {
+      disconnectSocket();
       localStorage.removeItem("authToken");
       localStorage.removeItem("loggedInUser");
       localStorage.removeItem("userRole");

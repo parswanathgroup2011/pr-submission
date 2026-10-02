@@ -1,7 +1,37 @@
-import { Avatar, Box, Button, Grid, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Button, Grid, MenuItem, Paper, Stack, Typography } from "@mui/material";
 import DetailsDrawer from "../../components/ui/DetailsDrawer";
 import AppDialog from "../../components/ui/AppDialog";
-import { useState } from "react";
+import AuthedImage from "../../components/ui/AuthedImage";
+import FormField from "../../components/ui/FormField";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import useAuthedFileUrl from "../../hooks/useAuthedFileUrl";
+import { updateUserRole } from "../../services/adminApi";
+import { handleError, handleSuccess } from "../../utils";
+import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
+
+const ROLE_OPTIONS = ["user", "admin"];
+
+function currentUserId() {
+  const token = localStorage.getItem("authToken");
+  if (!token) return "";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload?._id ? String(payload._id) : "";
+  } catch {
+    return "";
+  }
+}
+
+function roleErrorMessage(err) {
+  const status = err?.response?.status;
+  const message = err?.response?.data?.message || err?.response?.data?.error;
+  if (status === 400) return message || "Role must be user or admin.";
+  if (status === 403) return message || "You do not have permission to change this role.";
+  if (status === 404) return message || "User not found.";
+  if (status === 401) return "Your session has ended. Please sign in again.";
+  return "Unable to update role. Please try again.";
+}
 
 const valueOrDash = (value) => (value ? value : "—");
 
@@ -32,17 +62,19 @@ function Field({ label, children }) {
   );
 }
 
-function DocumentCard({ label, src, onView }) {
+function DocumentCard({ label, filePath, onView }) {
+  const src = useAuthedFileUrl(filePath);
+
   return (
     <Paper elevation={1} sx={{ p: 1.5, borderRadius: "12px", height: "100%" }}>
       <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
         {label}
       </Typography>
-      {src ? (
+      {filePath ? (
         <>
           <Box
             component="img"
-            src={src}
+            src={src || undefined}
             alt={label}
             onClick={onView}
             sx={{
@@ -70,8 +102,19 @@ function DocumentCard({ label, src, onView }) {
   );
 }
 
-export default function UserDetailsDrawer({ user, open, onClose, getImageUrl }) {
-  const [preview, setPreview] = useState({ open: false, src: "", title: "" });
+export default function UserDetailsDrawer({ user, open, onClose, onUpdated, socketSyncPending = false }) {
+  const [preview, setPreview] = useState({ open: false, filePath: "", title: "" });
+  const [role, setRole] = useState("user");
+  const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const avatarSrc = useAuthedFileUrl(user?.profileImage);
+  const isSelf = Boolean(user?._id) && String(user._id) === currentUserId();
+
+  useEffect(() => {
+    setRole(ROLE_OPTIONS.includes(user?.role) ? user.role : "user");
+    setSaving(false);
+    setConfirmOpen(false);
+  }, [user?._id, user?.role]);
 
   if (!user) return null;
 
@@ -81,16 +124,43 @@ export default function UserDetailsDrawer({ user, open, onClose, getImageUrl }) 
       : `https://${user.website}`
     : "";
 
-  const openPreview = (src, title) => {
-    if (!src) return;
-    setPreview({ open: true, src, title });
+  const openPreview = (filePath, title) => {
+    if (!filePath) return;
+    setPreview({ open: true, filePath, title });
   };
 
+  const confirmRoleChange = async () => {
+    setConfirmOpen(false);
+    setSaving(true);
+    try {
+      const data = await updateUserRole(user._id, role);
+      const savedRole = data?.user?.role || role;
+      const socketSync = data?.socketSync !== false;
+      onUpdated?.({ _id: user._id, role: savedRole, socketSync });
+      if (!socketSync) {
+        toast.warning(
+          data?.message ||
+            "Role saved, but this user's live admin access could not be updated. Save the role again to retry.",
+          { position: "top-right" }
+        );
+      } else {
+        handleSuccess(data?.message || "Role updated");
+      }
+    } catch (err) {
+      handleError(roleErrorMessage(err));
+      setRole(ROLE_OPTIONS.includes(user.role) ? user.role : "user");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const retryingSocketSync = socketSyncPending && role === user.role;
+
   const documents = [
-    { label: "Profile photo", src: getImageUrl(user.profileImage) },
-    { label: "Company logo", src: getImageUrl(user.businessLogo) },
-    { label: "GST document", src: getImageUrl(user.gstImage) },
-    { label: "PAN document", src: getImageUrl(user.panImage) },
+    { label: "Profile photo", filePath: user.profileImage },
+    { label: "Company logo", filePath: user.businessLogo },
+    { label: "GST document", filePath: user.gstImage },
+    { label: "PAN document", filePath: user.panImage },
   ];
 
   return (
@@ -98,7 +168,7 @@ export default function UserDetailsDrawer({ user, open, onClose, getImageUrl }) 
       <DetailsDrawer open={open} onClose={onClose} title="User details" width={560}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
           <Avatar
-            src={getImageUrl(user.profileImage) || undefined}
+            src={avatarSrc || undefined}
             alt={user.clientName || "User"}
             sx={{ width: 72, height: 72 }}
           />
@@ -149,8 +219,8 @@ export default function UserDetailsDrawer({ user, open, onClose, getImageUrl }) 
               <Grid key={doc.label} size={{ xs: 12, sm: 6 }}>
                 <DocumentCard
                   label={doc.label}
-                  src={doc.src}
-                  onView={() => openPreview(doc.src, doc.label)}
+                  filePath={doc.filePath}
+                  onView={() => openPreview(doc.filePath, doc.label)}
                 />
               </Grid>
             ))}
@@ -168,7 +238,33 @@ export default function UserDetailsDrawer({ user, open, onClose, getImageUrl }) 
         </Section>
 
         <Section title="Account">
-          <Field label="Role">{valueOrDash(user.role)}</Field>
+          <FormField
+            select
+            label="Role"
+            value={role}
+            onChange={(event) => setRole(event.target.value)}
+            disabled={isSelf || saving}
+            size="small"
+            fullWidth
+            helperText={
+              isSelf
+                ? "You cannot change your own role."
+                : retryingSocketSync
+                  ? "Role saved. Live admin access could not be updated. Save again to retry."
+                  : "Saves this account's access level."
+            }
+          >
+            <MenuItem value="user">User</MenuItem>
+            <MenuItem value="admin">Admin</MenuItem>
+          </FormField>
+          <Button
+            variant="contained"
+            disabled={isSelf || saving || (role === user.role && !socketSyncPending)}
+            onClick={() => setConfirmOpen(true)}
+            sx={{ mb: 2 }}
+          >
+            {saving ? "Saving…" : retryingSocketSync ? "Retry role sync" : "Save role"}
+          </Button>
           <Field label="Created">
             {user.createdAt ? new Date(user.createdAt).toLocaleString() : "—"}
           </Field>
@@ -178,16 +274,29 @@ export default function UserDetailsDrawer({ user, open, onClose, getImageUrl }) 
         </Section>
       </DetailsDrawer>
 
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Change role?"
+        description={
+          retryingSocketSync
+            ? `Retry live access for ${user.clientName || "this user"}. Their saved role is already ${role}.`
+            : `Set ${user.clientName || "this user"} to ${role}.`
+        }
+        confirmLabel={retryingSocketSync ? "Retry role sync" : "Save role"}
+        destructive={role === "user"}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmRoleChange}
+      />
+
       <AppDialog
         open={preview.open}
-        onClose={() => setPreview({ open: false, src: "", title: "" })}
+        onClose={() => setPreview({ open: false, filePath: "", title: "" })}
         title={preview.title}
         maxWidth="md"
       >
         <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <Box
-            component="img"
-            src={preview.src}
+          <AuthedImage
+            filePath={preview.filePath}
             alt={preview.title}
             sx={{ width: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 1 }}
           />

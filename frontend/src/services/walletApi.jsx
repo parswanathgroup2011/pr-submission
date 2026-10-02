@@ -14,9 +14,3 @@ export const getWalletTransactions = async () => {
 };
 
 
-export const rechargeWallet = async(amount) => {
-  const response = await apiClient.post('/wallet/recharge',{amount});
-  return response.data;
-}
-
-

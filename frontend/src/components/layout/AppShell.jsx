@@ -3,7 +3,7 @@ import { Box, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Outlet } from "react-router-dom";
 import { toast } from "react-toastify";
-import { connectSocket, socket } from "../../socket";
+import { connectSocket } from "../../socket";
 import AppDrawer from "./AppDrawer";
 import ClientDrawer from "./ClientDrawer";
 import AppNavbar from "./AppNavbar";
@@ -20,10 +20,8 @@ export default function AppShell({ navItems, variant = "client" }) {
   };
 
   useEffect(() => {
-    connectSocket();
-  }, []);
-
-  useEffect(() => {
+    const current = connectSocket();
+    if (!current) return undefined;
     const listener = (data) => {
       toast.info(
         variant === "admin"
@@ -32,8 +30,8 @@ export default function AppShell({ navItems, variant = "client" }) {
         { position: "top-right" }
       );
     };
-    socket?.on("newNotification", listener);
-    return () => socket?.off("newNotification", listener);
+    current.on("newNotification", listener);
+    return () => current.off("newNotification", listener);
   }, [variant]);
 
   return (

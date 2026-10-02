@@ -10,6 +10,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { CloudUpload } from '@mui/icons-material';
 import MuiRichText from '../common/MuiRichText';
+import useAuthedFileUrl from '../../hooks/useAuthedFileUrl';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'];
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
@@ -20,14 +21,6 @@ function htmlHasText(html) {
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+/g, " ")
     .trim().length > 0;
-}
-
-function getImageUrl(filePath) {
-  if (!filePath) return "";
-  const baseUrl = String(import.meta.env.VITE_API_URL || "").replace(/\/api\/?$/, "");
-  const cleaned = String(filePath).replace(/\\/g, "/").replace(/^\.?\//, "");
-  if (/^https?:\/\//i.test(cleaned)) return cleaned;
-  return `${baseUrl}/${cleaned}`;
 }
 
 const buildSchema = (existingImage) => yup.object({
@@ -47,17 +40,20 @@ const buildSchema = (existingImage) => yup.object({
 }).required();
 
 function ImageUploadField({ value, onChange, existingImage, error }) {
-  const [preview, setPreview] = useState(() => getImageUrl(existingImage));
+  const [localPreview, setLocalPreview] = useState("");
+  const existingPreview = useAuthedFileUrl(value ? "" : existingImage);
 
   useEffect(() => {
     if (!value) {
-      setPreview(getImageUrl(existingImage));
+      setLocalPreview("");
       return undefined;
     }
     const url = URL.createObjectURL(value);
-    setPreview(url);
+    setLocalPreview(url);
     return () => URL.revokeObjectURL(url);
-  }, [value, existingImage]);
+  }, [value]);
+
+  const preview = localPreview || existingPreview;
 
   return (
     <Box>

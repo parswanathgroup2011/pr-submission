@@ -10,14 +10,6 @@ import AppPagination from "../../components/ui/AppPagination";
 import ActionIconButton from "../../components/ui/ActionIconButton";
 import UserDetailsDrawer from "./UserDetailsDrawer";
 
-const getImageUrl = (filePath) => {
-  if (!filePath) return "";
-  const baseUrl = String(import.meta.env.VITE_API_URL || "").replace(/\/api\/?$/, "");
-  const cleaned = String(filePath).replace(/\\/g, "/").replace(/^\.?\//, "");
-  if (/^https?:\/\//i.test(cleaned)) return cleaned;
-  return `${baseUrl}/${cleaned}`;
-};
-
 const DOCUMENT_FIELDS = ["profileImage", "businessLogo", "gstImage", "panImage"];
 
 const countDocuments = (user) =>
@@ -42,6 +34,7 @@ const UserMaster = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [socketSyncPendingId, setSocketSyncPendingId] = useState(null);
   const itemsPerPage = 20;
 
   const fetchUsers = async () => {
@@ -256,7 +249,27 @@ const UserMaster = () => {
         user={selectedUser}
         open={Boolean(selectedUser)}
         onClose={() => setSelectedUser(null)}
-        getImageUrl={getImageUrl}
+        socketSyncPending={
+          Boolean(selectedUser?._id) && String(selectedUser._id) === String(socketSyncPendingId)
+        }
+        onUpdated={(updated) => {
+          if (!updated?._id) return;
+          setUsers((current) =>
+            current.map((item) =>
+              String(item._id) === String(updated._id) ? { ...item, role: updated.role } : item
+            )
+          );
+          setSelectedUser((current) =>
+            current && String(current._id) === String(updated._id)
+              ? { ...current, role: updated.role }
+              : current
+          );
+          setSocketSyncPendingId((current) => {
+            if (updated.socketSync === false) return String(updated._id);
+            if (current && String(current) === String(updated._id)) return null;
+            return current;
+          });
+        }}
       />
     </Box>
   );
