@@ -21,34 +21,7 @@ const getWalletTransactions = async (req, res) => {
 };
 
 
-const rechargeWallet = async (req, res) => {
-  try {
-    // Convert amount to number
-    const amount = parseFloat(req.body.amount);
-
-    // Validate amount
-    if (isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ success: false, message: "Invalid amount" });
-    
-    }
-
-    // Credit wallet
-    const wallet = await walletService.creditWallet(
-      req.user._id,
-      amount,
-      "Wallet recharge"
-    );
-
-    // Return updated balance
-    res.status(200).json({ success: true, balance: wallet.balance });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message || "Server error" });
-  }
-};
-
-
-module.exports = { getWalletBalance, getWalletTransactions, rechargeWallet};
+module.exports = { getWalletBalance, getWalletTransactions };
 
 
 

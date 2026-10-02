@@ -1,8 +1,12 @@
 const UsersModel= require("../Models/Users");
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const jwt= require('jsonwebtoken');
 const nodemailer= require('nodemailer')
+
+// Wrong OTP guesses allowed before the code is invalidated
+const MAX_OTP_ATTEMPTS = 5;
 
 
 
@@ -52,7 +56,7 @@ const signup=async(req,res) =>{
 
 const getUserById = async(req,res) => {
   try{
-    const user = await UsersModel.findById(req.user._id).select("-password -resetOtp -resetOtpExpire");
+    const user = await UsersModel.findById(req.user._id).select("-password -resetOtp -resetOtpExpire -resetOtpAttempts");
     if(!user){
       return res.status(404).json({error:"User not found"})
     }
@@ -179,7 +183,7 @@ const login=async(req,res) =>{
     }
     const JwtToken= jwt.sign({email:user.email, _id:user._id,role: user.role},
       process.env.JWT_SECRET,
-      {expiresIn:'24h'}
+      {expiresIn: process.env.JWT_EXPIRES_IN || '12h'}
     )                                                                                                                                                                                                                                                                                                                                                                    
     res.status(200)
     .json({
@@ -215,14 +219,13 @@ const forgotPassword = async(req,res) =>{
     }
 
 
-  // Generate 6-digit OTP //Math.random gives between 0 to 1
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate a cryptographically random 6-digit OTP
+  const otp = crypto.randomInt(100000, 1000000).toString();
 
-
-// save otp and expiration below line come from database 
-
-  user.resetOtp=otp;
+// Only the hash is stored, so a database or API leak cannot expose a live OTP
+  user.resetOtp=await bcrypt.hash(otp,10);
   user.resetOtpExpire=Date.now() +10*60*1000;
+  user.resetOtpAttempts=0;
   await user.save();
 
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -262,24 +265,59 @@ const forgotPassword = async(req,res) =>{
 const resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "Email, OTP, and new password are required", success: false });
+    }
+
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters", success: false });
+    }
+
     const user = await UsersModel.findOne({ email });
 
-    if (!user || user.resetOtp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP", success: false });
+    // Same response whether or not the account exists, so this cannot be used
+    // to discover which emails are registered.
+    const invalidOtp = () =>
+      res.status(400).json({ message: "Invalid or expired OTP", success: false });
+
+    if (!user || !user.resetOtp || !user.resetOtpExpire) {
+      return invalidOtp();
     }
 
     if (user.resetOtpExpire < Date.now()) {
-      return res.status(400).json({ message: "OTP has expired" });
+      user.resetOtp = undefined;
+      user.resetOtpExpire = undefined;
+      user.resetOtpAttempts = 0;
+      await user.save();
+      return invalidOtp();
     }
-    
-    
-    
+
+    if (user.resetOtpAttempts >= MAX_OTP_ATTEMPTS) {
+      user.resetOtp = undefined;
+      user.resetOtpExpire = undefined;
+      user.resetOtpAttempts = 0;
+      await user.save();
+      return res.status(429).json({
+        message: "Too many incorrect attempts. Please request a new OTP.",
+        success: false,
+      });
+    }
+
+    const otpMatches = await bcrypt.compare(String(otp), user.resetOtp);
+    if (!otpMatches) {
+      user.resetOtpAttempts += 1;
+      await user.save();
+      return invalidOtp();
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
 
     // Clear OTP fields
     user.resetOtp = undefined;
     user.resetOtpExpire = undefined;
+    user.resetOtpAttempts = 0;
 
     await user.save();
 

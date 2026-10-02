@@ -2,10 +2,11 @@
 const express = require("express");
 const PDFDocument = require("pdfkit");
 const PressRelease = require("../Models/pressRelease"); 
+const ensureAuthenticated = require("../Middleware/Auth");
 const router = express.Router();
 
 // 🟢 Download PR as PDF
-router.get("/:id", async (req, res) => {
+router.get("/:id", ensureAuthenticated, async (req, res) => {
   try {
     // ✅ Fetch PR with populated plan & category
     const pr = await PressRelease.findById(req.params.id)
@@ -13,6 +14,14 @@ router.get("/:id", async (req, res) => {
       .populate("selectedCategory");
 
     if (!pr) return res.status(404).send("PR not found");
+
+    const ownerId = pr.userId?._id || pr.userId;
+    const isOwnerOrAdmin =
+      req.user?.role === "admin" || String(ownerId) === String(req.user._id);
+
+    if (!isOwnerOrAdmin) {
+      return res.status(403).send("Access denied");
+    }
 
     // Create PDF
     const doc = new PDFDocument({ margin: 50, size: "A4" });

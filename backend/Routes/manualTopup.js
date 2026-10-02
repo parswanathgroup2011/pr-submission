@@ -9,7 +9,8 @@ const auth = require("../Middleware/Auth");
 router.post(
   "/manual-topup",
   auth,
-  upload.single("screenshot"),   
+  upload.single("screenshot"),
+  upload.verifyUploadedImages,
   createManualTopup
 );
 

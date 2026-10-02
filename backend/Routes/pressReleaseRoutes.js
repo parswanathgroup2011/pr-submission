@@ -11,7 +11,7 @@ const isAdmin = require('../Middleware/isAdmin');
 // POST route to create,get,update,delete press release
 
 // CREATE
-router.post('/create', ensureAuthenticated, upload.single("image"), createPressRelease);
+router.post('/create', ensureAuthenticated, upload.single("image"), upload.verifyUploadedImages, createPressRelease);
 
 
 
@@ -27,7 +27,7 @@ router.get('/:id',ensureAuthenticated,getPressReleaseById);    // Get one by ID
 
 
 // UPDATE
-router.put('/:id', ensureAuthenticated, upload.single("image"), updatePressRelease);
+router.put('/:id', ensureAuthenticated, upload.single("image"), upload.verifyUploadedImages, updatePressRelease);
        // Update by ID
 
 // DELETE

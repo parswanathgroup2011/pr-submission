@@ -2,9 +2,11 @@ const express = require('express');
 const router= express.Router();
 const User = require('../Models/Users');
 const Wallet = require('../Models/Wallet');
+const auth = require('../Middleware/Auth');
+const isAdmin = require('../Middleware/isAdmin');
 
 //Get all user info with wallet info
-router.get("/user-wallet", async(req,res) => {
+router.get("/user-wallet", auth, isAdmin, async(req,res) => {
   try{
     const users = await User.find({},"clientName email mobileNumber role");
 

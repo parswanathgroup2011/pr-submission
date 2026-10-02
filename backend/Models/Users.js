@@ -29,9 +29,10 @@ const UserSchema=new Schema({
   accountNumber:{type:String},
 
 
-   // 👇 OTP Fields for Forgot Password
+   // 👇 OTP Fields for Forgot Password (resetOtp stores a bcrypt hash)
    resetOtp: { type: String },
    resetOtpExpire: { type: Date },
+   resetOtpAttempts: { type: Number, default: 0 },
   role: { type: String, default: "user" }  
    
 },{timestamps:true},);
