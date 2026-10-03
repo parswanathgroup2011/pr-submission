@@ -14,7 +14,7 @@ export const getAllCategories = async() =>{
   }
 };
 
-export const createCategoryAdmin = async() => {
+export const createCategoryAdmin = async (categoryData) => {
   try {
     const response = await apiClient.post(API_ENDPOINT, categoryData);
     return response.data;
