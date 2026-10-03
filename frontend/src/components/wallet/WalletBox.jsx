@@ -35,7 +35,7 @@ export default function WalletBox() {
     try {
       const res = await getWalletBalance();
       setBalance(res.balance ?? 0);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load wallet balance");
     } finally {
       setLoading(false);
@@ -71,7 +71,7 @@ export default function WalletBox() {
       setPreview(null);
       setAmount("");
       setOpenManual(false);
-    } catch (err) {
+    } catch {
       toast.error("Failed to submit manual payment");
     } finally {
       setBusy(false);

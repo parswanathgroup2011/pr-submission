@@ -24,7 +24,7 @@ const Profile = () => {
         setLoading(true);
         const response = await getMyProfile();
         if (response.user) setProfile(response.user);
-      } catch (err) {
+      } catch {
         setMessage({ type: "error", text: "Failed to load your profile. Please refresh." });
       } finally {
         setLoading(false);

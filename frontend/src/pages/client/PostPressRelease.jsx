@@ -39,7 +39,7 @@ const PostPressRelease = () => {
         (pr) => pr.status === statusFilter
       );
       setFilteredRows(filtered);
-    } catch (err) {
+    } catch {
       handleError("Failed to load press releases");
     } finally {
       setIsLoading(false);
@@ -53,7 +53,7 @@ const PostPressRelease = () => {
       setFilteredRows([]);
       setPrList(response.pressRelease || []);
       setTotalPages(response.totalPages || 1);
-    } catch (err) {
+    } catch {
       handleError("Failed to load press releases");
     } finally {
       setIsLoading(false);

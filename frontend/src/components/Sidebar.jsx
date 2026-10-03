@@ -19,7 +19,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { useNavigate } from "react-router-dom";
-import { handleError, handleSuccess } from "../utils";
+import { handleSuccess } from "../utils";
 import { disconnectSocket } from "../socket";
 import { ToastContainer } from "react-toastify";
 
@@ -28,10 +28,6 @@ const drawerWidth = 220;
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-
-  const handleDrawerToggle = () => {
-    setOpen(!open);
-  };
 
   const menuItems = [
     { text: 'Home', icon: <DashboardIcon />, path: "/home" },

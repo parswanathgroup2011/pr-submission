@@ -58,7 +58,6 @@ export default function Step3PlanSelection({
   
 
   const selectedPlanId= watch('selectedPlan');
-  const selectedCategoryId = watch('selectedCategory');
 
 
   const selectedPlanObj = useMemo(

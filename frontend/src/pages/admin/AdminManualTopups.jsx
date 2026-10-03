@@ -61,7 +61,7 @@ const AdminManualTopups = () => {
       }
       setConfirm({ open: false, type: null, id: null });
       await load();
-    } catch (err) {
+    } catch {
       handleError("Action failed");
     }
   };

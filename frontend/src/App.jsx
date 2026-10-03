@@ -38,7 +38,7 @@ function PublicRoute({ element }) {
 }
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true); // Set true for testing
+  const [, setIsAuthenticated] = useState(true); // Set true for testing
 
   return (
     <div className="App">
