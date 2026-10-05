@@ -10,7 +10,7 @@ import AppShell from "./layout/AppShell";
 
 const adminNav = [
   { text: "Dashboard", icon: <DashboardIcon />, path: "/admin" },
-  { text: "Press Release", icon: <DescriptionIcon />, path: "/admin/press-releases" },
+  { text: "Press Releases", icon: <DescriptionIcon />, path: "/admin/press-releases" },
   { text: "Users", icon: <PeopleIcon />, path: "/admin/users" },
   { text: "Transactions", icon: <ReceiptIcon />, path: "/admin/transactions" },
   { text: "Wallets", icon: <AccountBalanceWalletIcon />, path: "/admin/wallets" },
